@@ -1,0 +1,196 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
+  oauth_token_secret String?
+  oauth_token        String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id               String            @id @default(cuid())
+  name             String?
+  image            String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  phoneNumber      String?
+  address          String?
+  city             String?
+  provinceState    String?
+  country          String?
+  postalZipCode    String?
+  accounts         Account[]
+  sessions         Session[]
+  saleTransactions SaleTransaction[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Product {
+  id               String               @id @default(cuid())
+  sku              String               @unique
+  name             String               @unique
+  type             ProductVariationType
+  variationName    String?
+  categoryId       String
+  category         ProductCategory      @relation(fields: [categoryId], references: [id])
+  description      String?
+  parentId         String?
+  parent           Product?             @relation("Variations", fields: [parentId], references: [id])
+  variations       Product[]            @relation("Variations")
+  image            String?
+  length           Float?
+  lengthUnit       String?
+  width            Float?
+  widthUnit        String?
+  height           Float?
+  heightUnit       String?
+  weight           Float?
+  weightUnit       String?
+  productInstances ProductInstance[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+model ProductCategory {
+  id        String            @id @default(cuid())
+  name      String            @unique
+  parentId  String?
+  parent    ProductCategory?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  ProductCategory[] @relation("CategoryTree")
+  products  Product[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
+model ProductInstance {
+  id                String           @id @default(cuid())
+  productId         String
+  product           Product          @relation(fields: [productId], references: [id])
+  invoiceCost       Float
+  invoiceCurrency   String
+  CADConversionRate Float
+  invoiceCostCAD    Float?
+  targetPrice       Float?
+  discount          Float?
+  finalSalePrice    Float            @default(0)
+  purchaseOrderId   String
+  purchaseOrder     PurchaseOrder    @relation(fields: [purchaseOrderId], references: [id])
+  saleTransactionId String?
+  saleTransaction   SaleTransaction? @relation(fields: [saleTransactionId], references: [id])
+  notes             String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model PurchaseOrder {
+  id               String            @id @default(cuid())
+  date             DateTime
+  supplierId       String
+  supplier         Supplier          @relation(fields: [supplierId], references: [id])
+  notes            String?
+  productInstances ProductInstance[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model SaleTransaction {
+  id                String                @id @default(cuid())
+  status            SaleTransactionStatus
+  dateTime          DateTime?
+  locationLatitude  Float?
+  locationLongitude Float?
+  city              String?
+  provinceState     String?
+  country           String?
+  discount          Float?
+  customerId        String
+  customer          Customer              @relation(fields: [customerId], references: [id])
+  salesPersonId     String
+  salesPerson       User                  @relation(fields: [salesPersonId], references: [id])
+  sourceId          String
+  source            Source                @relation(fields: [sourceId], references: [id])
+  productInstances  ProductInstance[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+}
+
+model Supplier {
+  id             String          @id @default(cuid())
+  name           String
+  email          String?
+  phoneNumber    String?
+  address        String?
+  city           String?
+  provinceState  String?
+  country        String?
+  postalZipCode  String?
+  purchaseOrders PurchaseOrder[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Customer {
+  id               String            @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String?
+  phoneNumber      String?
+  address          String?
+  city             String?
+  provinceState    String?
+  country          String?
+  postalZipCode    String?
+  saleTransactions SaleTransaction[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Source {
+  id               String            @id @default(cuid())
+  type             String
+  saleTransactions SaleTransaction[]
+}
+
+enum ProductVariationType {
+  SIMPLE
+  VARIABLE
+  VARIATION
+}
+
+enum SaleTransactionStatus {
+  OPEN
+  COMPLETE
+}
