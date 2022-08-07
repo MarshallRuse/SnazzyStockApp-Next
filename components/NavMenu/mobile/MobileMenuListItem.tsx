@@ -5,6 +5,7 @@ import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import MenuListItem from "../MenuListItem";
 import HoverStyledAnchor from "../HoverStyledAnchor";
 import SubMenu from "../SubMenu";
+import type { MenuItem } from "../MenuItem";
 
 const variants = {
     open: {
@@ -23,7 +24,7 @@ const variants = {
     },
 };
 
-export const MenuItem = ({ menuItem, ...rest }) => {
+export const MobileMenuListItem = ({ menuItem, ...rest }: { menuItem: MenuItem }) => {
     const [submenuOpen, setsubmenuOpen] = useState(false);
 
     return (
@@ -54,7 +55,7 @@ export const MenuItem = ({ menuItem, ...rest }) => {
                     {menuItem.submenu && <KeyboardArrowDown className='expansionIcon' />}
                 </div>
                 {menuItem.submenu && (
-                    <SubMenu open={submenuOpen}>
+                    <SubMenu>
                         {menuItem.submenu.map((sub) => (
                             <MenuListItem key={`sub-menu-${sub.displayText.replace(" ", "-")}`}>
                                 <Link href={sub.link} passHref>

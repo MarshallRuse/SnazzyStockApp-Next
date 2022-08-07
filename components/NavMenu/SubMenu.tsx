@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, ReactElement, ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import HoverStyledAnchor from "./HoverStyledAnchor";
 import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 
-export default function SubMenu({ menuLabel = "", MenuIcon, link = "", children, ...rest }) {
+type Props = {
+    menuLabel?: string;
+    MenuIcon?: () => ReactElement | null;
+    link?: string;
+    children: ReactNode;
+};
+
+export default function SubMenu({ menuLabel = "", MenuIcon = null, link = "", children, ...rest }: Props) {
     const [open, setOpen] = useState(false);
 
     return (

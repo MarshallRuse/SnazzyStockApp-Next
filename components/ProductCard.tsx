@@ -13,7 +13,20 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 
-const ProductCard = ({ name, id, imageSrc, variations }) => {
+type Variation = {
+    Product_ID: string;
+    SKU: string;
+    Product_Variation_Name: string;
+};
+
+type Props = {
+    name: string;
+    id: string;
+    imageSrc?: string;
+    variations: Variation[];
+};
+
+const ProductCard = ({ name, id, imageSrc, variations }: Props) => {
     const [expanded, setExpanded] = useState(false);
 
     const handleExpandClick = () => {
@@ -63,7 +76,7 @@ const ProductCard = ({ name, id, imageSrc, variations }) => {
                                     <List component='nav'>
                                         {variations.map((variant) => {
                                             return (
-                                                <ListItem button key={variant.Product_ID + variant.SKU + variant}>
+                                                <ListItem button key={variant.Product_ID + variant.SKU}>
                                                     <ListItemText
                                                         primary={`${name} - ${variant.Product_Variation_Name}`}
                                                         secondary={variant.SKU}

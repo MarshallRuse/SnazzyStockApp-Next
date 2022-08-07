@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { getSession } from "next-auth/react";
 import { AnimatePresence } from "framer-motion";
-import CTAButton from "@/components/CTAButton";
-import AuthModal from "@/components/AuthModal";
+import CTAButton from "components/CTAButton";
+import AuthModal from "components/AuthModal";
+import { GetServerSideProps } from "next";
 
-export async function getServerSideProps(context) {
+export const getServerSideProps: GetServerSideProps = async (context) => {
     // Check if user is authenticated
     const session = await getSession(context);
-    console.log("session: ", session);
 
     // If not, redirect to the homepage
     if (session) {
@@ -22,7 +22,7 @@ export async function getServerSideProps(context) {
     return {
         props: {},
     };
-}
+};
 
 export default function HomePage() {
     const [showModal, setShowModal] = useState(false);
@@ -38,9 +38,7 @@ export default function HomePage() {
                     <span className='stones text-zinc-500'>Stock</span>
                 </h1>
             </div>
-            <CTAButton element='button' onClick={openModal}>
-                Login
-            </CTAButton>
+            <CTAButton onClick={openModal}>Login</CTAButton>
             <AnimatePresence
                 // Disable any initial animations on children that
                 // are present when the component is first rendered

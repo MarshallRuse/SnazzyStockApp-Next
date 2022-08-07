@@ -1,9 +1,11 @@
+import { ProductCategory } from "@prisma/client";
 import { unstable_getServerSession } from "next-auth/next";
 import { authOptions } from "pages/api/auth/[...nextauth]";
-import { prisma } from "@/lib/prisma";
-import ProductForm from "@/components/forms/ProductForm";
+import { prisma } from "lib/prisma";
+import ProductForm from "../../components/forms/ProductForm";
+import { GetServerSideProps } from "next";
 
-export async function getServerSideProps(context) {
+export const getServerSideProps: GetServerSideProps = async (context) => {
     const session = await unstable_getServerSession(context.req, context.res, authOptions);
     console.log("add session: ", session);
 
@@ -23,10 +25,9 @@ export async function getServerSideProps(context) {
             categories: JSON.parse(JSON.stringify(categories)),
         },
     };
-}
+};
 
-export default function AddProductPage({ categories = [] }) {
-    console.log("categories in AddProductPage: ", categories);
+export default function AddProductPage({ categories = [] }: { categories: ProductCategory[] }) {
     return (
         <div className='flex flex-col'>
             <h1>Add Product</h1>

@@ -1,25 +1,11 @@
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
-import { menuContents, fetchCategoryMenuItems } from "./menuContents";
+import { menuContents } from "./menuContents";
 import MenuListItem from "./MenuListItem";
 import HoverStyledAnchor from "./HoverStyledAnchor";
 import SubMenu from "./SubMenu";
 import MobileNav from "./mobile/MobileNav";
-import { LinearProgress } from "@mui/material";
 
 export default function NavBar() {
-    const [shopMenuItems, setShopMenuItems] = useState([]);
-
-    // useEffect(() => {
-    //     async function getCategories() {
-    //         const shopCategories = await fetchCategoryMenuItems();
-    //         setShopMenuItems(shopCategories);
-    //     }
-
-    //     getCategories();
-    // }, []);
-
     return (
         <nav className='fixed top-0 left-0 bottom-0 w-60 z-10 py-4 flex flex-col gap-6 items-center align-center bg-white border-r border-bluegreen-500 '>
             <Link href='/'>

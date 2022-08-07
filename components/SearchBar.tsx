@@ -1,9 +1,18 @@
+import { ChangeEvent } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 
-const SearchBar = ({ searchLabel, searchVal, searchControl }) => {
-    const handleChange = (event) => {
+const SearchBar = ({
+    searchLabel,
+    searchVal,
+    searchControl,
+}: {
+    searchLabel: string;
+    searchVal: string;
+    searchControl: (s: string) => void;
+}) => {
+    const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
         searchControl(event.target.value);
     };
 

@@ -5,8 +5,9 @@ import Settings from "@mui/icons-material/Settings";
 import ShoppingBasket from "@mui/icons-material/ShoppingBasket";
 import ShoppingCart from "@mui/icons-material/ShoppingCart";
 import Storefront from "@mui/icons-material/Storefront";
+import type { MenuItem } from "./MenuItem";
 
-export async function fetchCategoryMenuItems() {
+export async function fetchCategoryMenuItems(): Promise<MenuItem[]> {
     const categoriesResponse = await fetch("/api/retail/categories");
     const responseJson = await categoriesResponse.json();
     const categories = responseJson.categories;
@@ -16,7 +17,9 @@ export async function fetchCategoryMenuItems() {
         displayText: cat.title,
     }));
 
-    return menuItems.sort((a, b) => (a.displayText > b.displayText ? 1 : b.displayText > a.displayText ? -1 : 0));
+    return menuItems.sort((a: MenuItem, b: MenuItem) =>
+        a.displayText > b.displayText ? 1 : b.displayText > a.displayText ? -1 : 0
+    );
 }
 
 export const menuContents = [

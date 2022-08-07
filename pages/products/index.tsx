@@ -1,26 +1,31 @@
-import { prisma } from "@/lib/prisma";
+import { Product, ProductCategory } from "@prisma/client";
+import { prisma } from "lib/prisma";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { FormControlLabel, Switch, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CTAButton from "@/components/CTAButton";
-import ProductCard from "@/components/ProductCard";
-import SearchBar from "@/components/SearchBar";
+import CTAAnchor from "components/CTAAnchor";
+import ProductCard from "components/ProductCard";
+import SearchBar from "components/SearchBar";
+import { GetServerSideProps } from "next";
 
-export async function getServerSideProps(context) {
+export const getServerSideProps: GetServerSideProps = async (context) => {
     const { query } = context;
-    let category = {};
+    let category = null;
+
     if ("category" in query) {
-        category = await prisma.productcategory.findUnique({
-            where: {
-                name: query.category,
-            },
-        });
+        if (typeof query.category === "string") {
+            category = await prisma.productCategory.findUnique({
+                where: {
+                    name: query.category,
+                },
+            });
+        }
     }
 
     // get all products (by category or not)
-    const products = category.id
+    const products = category?.id
         ? await prisma.product.findMany({
               where: {
                   category: category.id,
@@ -34,16 +39,22 @@ export async function getServerSideProps(context) {
             category: JSON.parse(JSON.stringify(category)),
         },
     };
-}
+};
 
-export default function ProductsListPage({ products = [], category = {} }) {
+export default function ProductsListPage({
+    products = [],
+    category = null,
+}: {
+    products: Product[];
+    category: ProductCategory;
+}) {
     const { query } = useRouter();
 
     const [productGroups, setProductGroups] = useState([]);
     const [searchValue, setSearchValue] = useState("");
     const [compactMode, setCompactMode] = useState(false);
 
-    const handleSearch = (searchString) => {
+    const handleSearch = (searchString: string) => {
         setSearchValue(searchString);
     };
 
@@ -91,10 +102,10 @@ export default function ProductsListPage({ products = [], category = {} }) {
                 </div>
                 <div className='col-span-12 sm:col-span-3'>
                     <Link href='/products/add' passHref>
-                        <CTAButton heavyRounding={false}>
+                        <CTAAnchor heavyRounding={false}>
                             <AddIcon />
                             Add Product
-                        </CTAButton>
+                        </CTAAnchor>
                     </Link>
                 </div>
             </div>
@@ -104,10 +115,10 @@ export default function ProductsListPage({ products = [], category = {} }) {
                         if (!searchValue) {
                             return true;
                         }
-                        const searchStringInGroup = group.GroupSKU.toLowerCase().includes(searchString.toLowerCase());
+                        const searchStringInGroup = group.GroupSKU.toLowerCase().includes(searchValue.toLowerCase());
                         const searchStringInChildrenNames =
                             group.variations.filter((prod) =>
-                                prod.name.toLowerCase().includes(searchString.toLowerCase())
+                                prod.name.toLowerCase().includes(searchValue.toLowerCase())
                             ).length > 0;
                         return searchStringInGroup || searchStringInChildrenNames;
                     })

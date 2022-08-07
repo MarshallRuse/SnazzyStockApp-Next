@@ -1,6 +1,12 @@
-import { forwardRef } from "react";
+import { forwardRef, ReactNode } from "react";
 
-const HoverStyledAnchor = forwardRef(({ children, className, ...rest }, ref) => {
+type Props = {
+    children: ReactNode;
+    className?: string;
+    onClick?: () => void;
+};
+
+const HoverStyledAnchor = forwardRef<HTMLAnchorElement, Props>(({ children, className, ...rest }, ref) => {
     return (
         <a
             ref={ref}

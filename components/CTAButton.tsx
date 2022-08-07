@@ -1,9 +1,17 @@
-import { forwardRef } from "react";
+import { forwardRef, ReactNode } from "react";
 
-const CTAButton = forwardRef(
-    ({ children, className = "", element: Component = "a", heavyRounding = true, disabled = false, ...rest }, ref) => {
+interface Props {
+    children?: ReactNode;
+    className?: string;
+    heavyRounding?: boolean;
+    disabled?: boolean;
+    onClick: () => void;
+}
+
+const CTAButton = forwardRef<HTMLButtonElement, Props>(
+    ({ children, className = "", heavyRounding = true, disabled = false, ...rest }, ref) => {
         return (
-            <Component
+            <button
                 ref={ref}
                 className={`inline-block ${
                     heavyRounding ? "rounded-3xl" : "rounded-md"
@@ -15,7 +23,7 @@ const CTAButton = forwardRef(
                 {...rest}
             >
                 {children}
-            </Component>
+            </button>
         );
     }
 );
