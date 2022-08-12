@@ -1,12 +1,13 @@
-import { ProductCategory } from "@prisma/client";
-import { useState, useEffect } from "react";
-import * as Yup from "yup";
+import { Prisma, ProductCategory } from "@prisma/client";
+import { useState } from "react";
+import { SchemaOf, string, number, object, array } from "yup";
 import { Controller, FormProvider, useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
     Button,
     FormControl,
     FormControlLabel,
+    FormHelperText,
     IconButton,
     InputAdornment,
     InputLabel,
@@ -19,109 +20,77 @@ import {
 import Add from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import ReactHookFormTextField from "./inputs/RHookFormTextField";
+import ProductAttributeInputs from "./ProductAttributeSubForm";
+import { IProductFormValues } from "lib/interfaces/IProductFormValues";
+import { IProductFormVariationValues } from "lib/interfaces/IProductFormVariationValues";
+import toast from "react-hot-toast";
 
-type ProductAttributeInputsProps = {
-    productType: "SIMPLE" | "VARIATION";
-    index?: number;
-    disabled: boolean;
-};
-
-const ProductAttributeInputs = ({ productType = "SIMPLE", index = null }: ProductAttributeInputsProps) => (
-    <div className='grid grid-cols-2 md:grid-cols-4 gap-4 my-4'>
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "length" : `variations.${index}.length`}
-            label={`Length`}
-            type='number'
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "lengthUnit" : `variations.${index}.lengthUnit`}
-            label={`Units`}
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "width" : `variations.${index}.width`}
-            label={`Width`}
-            type='number'
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "widthUnit" : `variations.${index}.widthUnit`}
-            label={`Units`}
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "height" : `variations.${index}.height`}
-            label={`Height`}
-            type='number'
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "heightUnit" : `variations.${index}.heightUnit`}
-            label={`Units`}
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "weight" : `variations.${index}.weight`}
-            label={`Weight`}
-            type='number'
-        />
-        <ReactHookFormTextField
-            name={productType === "SIMPLE" ? "weightUnit" : `variations.${index}.weightUnit`}
-            label={`Units`}
-        />
-    </div>
-);
-
-const ProductSchema = Yup.object().shape({
-    sku: Yup.string().trim().required(),
-    name: Yup.string().trim().required(),
-    category: Yup.string().trim().required(),
-    description: Yup.string().trim(),
-    type: Yup.string().trim().required().oneOf(["SIMPLE", "VARIABLE", "VARIATION"]),
-    image: Yup.string().trim().url(),
-    length: Yup.number().positive(),
-    lengthUnit: Yup.string().trim(),
-    width: Yup.number().positive(),
-    widthUnit: Yup.string().trim(),
-    height: Yup.number().positive(),
-    heightUnit: Yup.string().trim(),
-    weight: Yup.number().positive(),
-    weightUnit: Yup.string().trim(),
-    variations: Yup.array(),
-    /*.of(
-        Yup.object().shape({
-            sku: Yup.string().trim().required(),
-            name: Yup.string().trim().required(),
-            length: Yup.number().positive(),
-            lengthUnit: Yup.string().trim(),
-            width: Yup.number().positive(),
-            widthUnit: Yup.string().trim(),
-            height: Yup.number().positive(),
-            heightUnit: Yup.string().trim(),
-            weight: Yup.number().positive(),
-            weightUnit: Yup.string().trim(),
-        })
-    ).compact(v => v.sku !== "" || v.name !== ""),*/
+const ProductVariationSchema: SchemaOf<IProductFormVariationValues> = object({
+    sku: string().trim().when("type", {
+        is: "VARIABLE",
+        then: string().required(),
+    }),
+    name: string().trim().when("type", {
+        is: "VARIABLE",
+        then: string().required(),
+    }),
+    length: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    lengthUnit: string().trim(),
+    width: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    widthUnit: string().trim(),
+    height: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    heightUnit: string().trim(),
+    weight: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    weightUnit: string().trim(),
 });
 
-type ProductFormValues = {
-    sku: string;
-    name: string;
-    category: string;
-    description: string;
-    type: string;
-    image: string;
-    variations: {
-        sku: string;
-        name: string;
-        length: number;
-        lengthUnit: string;
-        width: number;
-        widthUnit: string;
-        height: number;
-        heightUnit: string;
-        weight: number;
-        weightUnit: string;
-    }[];
-};
+const ProductSchema: SchemaOf<IProductFormValues> = object({
+    sku: string().trim().required(),
+    name: string().trim().required(),
+    category: string().trim().required(),
+    description: string().trim(),
+    type: string().trim().required().oneOf(["SIMPLE", "VARIABLE", "VARIATION"]),
+    image: string().trim().url(),
+    length: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    lengthUnit: string().trim(),
+    width: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    widthUnit: string().trim(),
+    height: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    heightUnit: string().trim(),
+    weight: number()
+        .positive()
+        .transform((value) => (isNaN(value) ? undefined : value))
+        .nullable(true),
+    weightUnit: string().trim(),
+    variations: array().of(ProductVariationSchema).when("type", {
+        is: "VARIABLE",
+        then: array().required(),
+    }),
+});
 
 type ProductFormProps = {
-    initialValues: ProductFormValues;
+    initialValues: IProductFormValues;
     categories: ProductCategory[];
     redirectPath?: string;
     onSubmit: () => void;
@@ -163,9 +132,9 @@ export default function ProductForm({ initialValues = null, categories = [], red
     // react-hook-forms
     const methods = useForm({
         defaultValues: initialFormValues,
-        //resolver: yupResolver(ProductSchema),
+        resolver: yupResolver(ProductSchema),
     });
-    const { fields, append, remove } = useFieldArray<ProductFormValues>({
+    const { fields, append, remove } = useFieldArray<IProductFormValues>({
         control: methods.control, // control props comes from useForm
         name: "variations",
     });
@@ -173,7 +142,81 @@ export default function ProductForm({ initialValues = null, categories = [], red
     const watchType = methods.watch("type");
     const watchSKU = methods.watch("sku");
 
-    const onSubmit: SubmitHandler<ProductFormValues> = async (data: ProductFormValues) => console.log(data);
+    const onSubmit: SubmitHandler<IProductFormValues> = async (data: IProductFormValues) => {
+        console.log(data);
+        try {
+            const { sku, name, type, description } = data;
+            const newProducts: Prisma.ProductCreateWithoutCategoryInput[] = [];
+
+            if (type === "SIMPLE") {
+                const simpleProduct: Prisma.ProductCreateWithoutCategoryInput = {
+                    sku,
+                    name,
+                    type,
+                    description,
+                    length: data.length,
+                    lengthUnit: data.lengthUnit,
+                    width: data.width,
+                    widthUnit: data.widthUnit,
+                    height: data.height,
+                    heightUnit: data.heightUnit,
+                    weight: data.weight,
+                    weightUnit: data.weightUnit,
+                };
+                newProducts.push(simpleProduct);
+            } else if (type === "VARIABLE") {
+                const parentProduct: Prisma.ProductCreateWithoutCategoryInput = {
+                    sku,
+                    name,
+                    type,
+                    description,
+                };
+                newProducts.push(parentProduct);
+
+                data.variations.forEach((variation) => {
+                    const variant: Prisma.ProductCreateWithoutCategoryInput = {
+                        sku: `${data.sku}-${variation.sku}`,
+                        name,
+                        type: "VARIATION",
+                        variationName: variation.name,
+                        description,
+                        length: variation.length,
+                        lengthUnit: variation.lengthUnit,
+                        width: variation.width,
+                        widthUnit: variation.widthUnit,
+                        height: variation.height,
+                        heightUnit: variation.heightUnit,
+                        weight: variation.weight,
+                        weightUnit: variation.weightUnit,
+                    };
+                    newProducts.push(variant);
+                });
+            }
+
+            const body = {
+                products: newProducts,
+                categoryId: data.category,
+            };
+
+            const result = await fetch("/api/products", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const resultJSON = await result.json();
+
+            if (result.status === 201) {
+                console.log("SUCCESS!");
+                toast.success("Product added!");
+                methods.reset(initialFormValues);
+            } else {
+                console.log("Product Creation Error: ", resultJSON);
+                toast.error("Error adding product, check console.");
+            }
+        } catch (err) {
+            console.log("Product Creation Error: ", err);
+        }
+    };
 
     // state
     const [disabled, setDisabled] = useState(false);
@@ -183,21 +226,31 @@ export default function ProductForm({ initialValues = null, categories = [], red
         <FormProvider {...methods}>
             <form className='flex flex-col gap-8 mx-2 max-w-screen-md' onSubmit={methods.handleSubmit(onSubmit)}>
                 <div className='flex gap-4 w-full'>
-                    <ReactHookFormTextField name='sku' label='SKU' />
-                    <ReactHookFormTextField name='name' label='Name' />
+                    <ReactHookFormTextField name='sku' label='SKU' required fullWidth={false} />
+                    <ReactHookFormTextField name='name' label='Name' required className='flex-grow' />
                 </div>
 
                 <Controller
                     name='category'
                     control={methods.control}
                     render={({ field }) => (
-                        <FormControl required {...field} className='flex w-full'>
+                        <FormControl className='flex w-full' required error={!!methods.formState.errors["category"]}>
                             <InputLabel id='category-label'>Category</InputLabel>
-                            <Select labelId='category-label' label='Category *'>
+                            <Select
+                                labelId='category-label'
+                                label='Category *'
+                                defaultValue={initialFormValues.category}
+                                {...field}
+                            >
                                 {categories.map((cat: ProductCategory) => (
-                                    <MenuItem value={cat.id}>{cat.name}</MenuItem>
+                                    <MenuItem key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </MenuItem>
                                 ))}
                             </Select>
+                            <FormHelperText>
+                                {methods.formState.errors["category"]?.message?.toString() ?? ""}
+                            </FormHelperText>
                         </FormControl>
                     )}
                 />
@@ -237,39 +290,43 @@ export default function ProductForm({ initialValues = null, categories = [], red
                                     </IconButton>
                                 </div>
                                 <div className='flex gap-2'>
-                                    <Controller
-                                        name={`variations.${index}.sku`}
-                                        control={methods.control}
-                                        render={({ field }) => (
-                                            <TextField
-                                                label={`Variation ${index + 1} SKU`}
-                                                placeholder='XXX-00'
-                                                variant='outlined'
-                                                disabled={disabled}
-                                                InputProps={{
-                                                    startAdornment: (
-                                                        <InputAdornment className='mr-0' position='start'>
-                                                            {`${watchSKU}-`}
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                                {...field}
-                                            />
-                                        )}
+                                    <TextField
+                                        label={`Variation ${index + 1} SKU`}
+                                        placeholder='00'
+                                        variant='outlined'
+                                        required
+                                        error={!!methods.formState.errors["variations"]?.[index]?.["sku"]}
+                                        helperText={
+                                            methods.formState.errors["variations"]?.[index]?.[
+                                                "sku"
+                                            ]?.message?.toString() ?? ""
+                                        }
+                                        disabled={disabled}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment className='mr-0' position='start'>
+                                                    {`${watchSKU}-`}
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        {...methods.register(`variations.${index}.sku` as const)}
                                     />
-                                    <Controller
-                                        name={`variations.${index}.name`}
-                                        control={methods.control}
-                                        render={({ field }) => (
-                                            <TextField
-                                                className='flex-grow'
-                                                label={`Variation ${index + 1} Name`}
-                                                placeholder='16 inch'
-                                                variant='outlined'
-                                                disabled={disabled}
-                                                {...field}
-                                            />
-                                        )}
+
+                                    <TextField
+                                        className='flex-grow'
+                                        label={`Variation ${index + 1} Name`}
+                                        placeholder='16 inch'
+                                        variant='outlined'
+                                        required
+                                        error={!!methods.formState.errors["variations"]?.[index]?.["name"]}
+                                        helperText={
+                                            methods.formState.errors["variations"]?.[index]?.[
+                                                "name"
+                                            ]?.message?.toString() ?? ""
+                                        }
+                                        disabled={disabled}
+                                        fullWidth
+                                        {...methods.register(`variations.${index}.name` as const)}
                                     />
                                 </div>
                                 <ProductAttributeInputs productType='VARIATION' index={index} disabled={disabled} />

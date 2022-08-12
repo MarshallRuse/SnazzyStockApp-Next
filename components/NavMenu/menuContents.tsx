@@ -5,24 +5,24 @@ import Settings from "@mui/icons-material/Settings";
 import ShoppingBasket from "@mui/icons-material/ShoppingBasket";
 import ShoppingCart from "@mui/icons-material/ShoppingCart";
 import Storefront from "@mui/icons-material/Storefront";
-import type { MenuItem } from "./MenuItem";
+import type { IMenuItem } from "../../lib/interfaces/IMenuItem";
+import type { ProductCategory } from "@prisma/client";
 
-export async function fetchCategoryMenuItems(): Promise<MenuItem[]> {
-    const categoriesResponse = await fetch("/api/retail/categories");
-    const responseJson = await categoriesResponse.json();
-    const categories = responseJson.categories;
-    const menuItems = categories.map((cat) => ({
+export async function fetchCategoryMenuItems(): Promise<IMenuItem[]> {
+    const categoriesResponse = await fetch("/api/product_categories");
+    const categories = await categoriesResponse.json();
+    const menuItems = categories.map((cat: ProductCategory) => ({
         isLink: true,
-        link: `/retail/categories/${cat.title.replace(" ", "_")}`,
-        displayText: cat.title,
+        link: `/products?category=${cat.name}`,
+        displayText: cat.name,
     }));
 
-    return menuItems.sort((a: MenuItem, b: MenuItem) =>
+    return menuItems.sort((a: IMenuItem, b: IMenuItem) =>
         a.displayText > b.displayText ? 1 : b.displayText > a.displayText ? -1 : 0
     );
 }
 
-export const menuContents = [
+export const menuContents: IMenuItem[] = [
     {
         isLink: true,
         link: "/",

@@ -5,7 +5,7 @@ import KeyboardArrowDown from "@mui/icons-material/KeyboardArrowDown";
 import MenuListItem from "../MenuListItem";
 import HoverStyledAnchor from "../HoverStyledAnchor";
 import SubMenu from "../SubMenu";
-import type { MenuItem } from "../MenuItem";
+import type { IMenuItem } from "../../../lib/interfaces/IMenuItem";
 
 const variants = {
     open: {
@@ -24,7 +24,7 @@ const variants = {
     },
 };
 
-export const MobileMenuListItem = ({ menuItem, ...rest }: { menuItem: MenuItem }) => {
+export const MobileMenuListItem = ({ menuItem, ...rest }: { menuItem: IMenuItem }) => {
     const [submenuOpen, setsubmenuOpen] = useState(false);
 
     return (
@@ -56,7 +56,7 @@ export const MobileMenuListItem = ({ menuItem, ...rest }: { menuItem: MenuItem }
                 </div>
                 {menuItem.submenu && (
                     <SubMenu>
-                        {menuItem.submenu.map((sub) => (
+                        {menuItem.submenu.map((sub: IMenuItem) => (
                             <MenuListItem key={`sub-menu-${sub.displayText.replace(" ", "-")}`}>
                                 <Link href={sub.link} passHref>
                                     <HoverStyledAnchor>{sub.displayText}</HoverStyledAnchor>

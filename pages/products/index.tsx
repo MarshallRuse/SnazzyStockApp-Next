@@ -9,18 +9,26 @@ import CTAAnchor from "components/CTAAnchor";
 import ProductCard from "components/ProductCard";
 import SearchBar from "components/SearchBar";
 import { GetServerSideProps } from "next";
+import { IProductGroup } from "lib/interfaces/IProductGroup";
+import { nameToSlug, slugToName } from "lib/utils/slugUtils";
+import {
+    productCategoryListToTree,
+    productCategoryTreeToList,
+    productCategorySubTree,
+} from "lib/utils/productCategoryTrees";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { query } = context;
     let category = null;
+    let subCategories = null;
 
     if ("category" in query) {
         if (typeof query.category === "string") {
-            category = await prisma.productCategory.findUnique({
-                where: {
-                    name: query.category,
-                },
-            });
+            const categories = await prisma.productCategory.findMany();
+            category = categories.find((cat) => nameToSlug(cat.name) === (query.category as string).toLowerCase());
+            const categoryTree = productCategoryListToTree(categories);
+            const subTree = productCategorySubTree(categoryTree, "name", category.name);
+            subCategories = productCategoryTreeToList(subTree).flat();
         }
     }
 
@@ -28,7 +36,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const products = category?.id
         ? await prisma.product.findMany({
               where: {
-                  category: category.id,
+                  categoryId: {
+                      in: [category.id, ...subCategories?.map((cat) => cat.id)],
+                  },
               },
           })
         : await prisma.product.findMany();
@@ -50,7 +60,7 @@ export default function ProductsListPage({
 }) {
     const { query } = useRouter();
 
-    const [productGroups, setProductGroups] = useState([]);
+    const [productGroups, setProductGroups] = useState<IProductGroup[]>([]);
     const [searchValue, setSearchValue] = useState("");
     const [compactMode, setCompactMode] = useState(false);
 
@@ -60,16 +70,17 @@ export default function ProductsListPage({
 
     const handleCompactModeChange = () => setCompactMode(!compactMode);
 
-    const groupProducts = (products) => {
+    const groupProducts = (products: Product[]) => {
         // Create a list of simple and Variable products
-        const simpleAndVariableProducts = products.filter((prod) => prod.type === "SIMPLE" || prod.type === "VARIABLE");
-        console.log("Simple and Variable Products: ", simpleAndVariableProducts);
+        const simpleAndVariableProducts: Product[] = products.filter(
+            (prod) => prod.type === "SIMPLE" || prod.type === "VARIABLE"
+        );
 
-        const productGroups = simpleAndVariableProducts.map((product) => ({
-            GroupSKU: product.sku,
-            GroupType: product.type,
-            GroupName: product.name,
-            GroupImage: product.image,
+        const productGroups: IProductGroup[] = simpleAndVariableProducts.map((product: Product) => ({
+            groupSKU: product.sku,
+            groupType: product.type,
+            groupName: product.name,
+            groupImage: product.image,
             variations: products.filter((prod) => prod.type === "VARIATION" && prod.parentId === product.id),
         }));
 
@@ -109,35 +120,40 @@ export default function ProductsListPage({
                     </Link>
                 </div>
             </div>
-            {productGroups.length > 0 ? (
-                productGroups
-                    .filter((group) => {
-                        if (!searchValue) {
-                            return true;
-                        }
-                        const searchStringInGroup = group.GroupSKU.toLowerCase().includes(searchValue.toLowerCase());
-                        const searchStringInChildrenNames =
-                            group.variations.filter((prod) =>
-                                prod.name.toLowerCase().includes(searchValue.toLowerCase())
-                            ).length > 0;
-                        return searchStringInGroup || searchStringInChildrenNames;
-                    })
-                    .map((prodGroup) => (
-                        <ProductCard
-                            key={prodGroup.GroupSKU}
-                            name={prodGroup.GroupName}
-                            id={prodGroup.GroupSKU}
-                            imageSrc={prodGroup.GroupImage}
-                            variations={prodGroup.variations}
-                        />
-                    ))
-            ) : (
-                <div className='col-span-12'>
-                    <Typography align='center' style={{ marginTop: "50px" }}>
-                        No Products in <strong>{query.category}</strong> category
-                    </Typography>
-                </div>
-            )}
+            <div className='grid grid-cols-12 gap-4'>
+                {productGroups.length > 0 ? (
+                    productGroups
+                        .filter((group: IProductGroup) => {
+                            if (!searchValue) {
+                                return true;
+                            }
+                            const searchStringInGroup = group.groupSKU
+                                .toLowerCase()
+                                .includes(searchValue.toLowerCase());
+                            const searchStringInChildrenNames =
+                                group.variations.filter((prod) =>
+                                    prod.name.toLowerCase().includes(searchValue.toLowerCase())
+                                ).length > 0;
+                            return searchStringInGroup || searchStringInChildrenNames;
+                        })
+                        .map((group: IProductGroup) => (
+                            <div className='col-span-12 sm:col-span-6 md:col-span-4' key={group.groupSKU}>
+                                <ProductCard
+                                    name={group.groupName}
+                                    id={group.groupSKU}
+                                    imageSrc={group.groupImage}
+                                    variations={group.variations}
+                                />
+                            </div>
+                        ))
+                ) : (
+                    <div className='col-span-12'>
+                        <Typography align='center' style={{ marginTop: "50px" }}>
+                            No Products in <strong>{query.category}</strong> category
+                        </Typography>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

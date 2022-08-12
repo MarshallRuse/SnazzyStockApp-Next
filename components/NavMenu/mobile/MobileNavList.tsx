@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { MobileMenuListItem } from "./MobileMenuListItem";
-import { menuContents } from "../menuContents";
+import type { IMenuItem } from "lib/interfaces/IMenuItem";
 
 const variants = {
     open: {
@@ -11,7 +11,7 @@ const variants = {
     },
 };
 
-export const MobileNavList = () => {
+export const MobileNavList = ({ menuContents = [] }: { menuContents: IMenuItem[] }) => {
     return (
         <motion.ul variants={variants} className='m-0 px-16 py-6 absolute top-24 w-full'>
             {menuContents.map((menuItem, index) => (

@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { motion, useCycle } from "framer-motion";
+import { motion } from "framer-motion";
 import { useDimensions } from "./use-dimensions";
 import { MenuToggle } from "./MenuToggle";
 import { MobileNavList } from "./MobileNavList";
+import type { IMenuItem } from "lib/interfaces/IMenuItem";
 
 const sidebar = {
     open: (height = 1000) => ({
@@ -25,7 +27,7 @@ const sidebar = {
     },
 };
 
-export default function MobileNav() {
+export default function MobileNav({ menuContents = [] }: { menuContents: IMenuItem[] }) {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
@@ -52,20 +54,30 @@ export default function MobileNav() {
     }, [isOpen]);
 
     return (
-        <motion.nav
-            className='absolute top-0 left-0 bottom-0 right-0 w-12 h-12'
-            initial={false}
-            animate={isOpen ? "open" : "closed"}
-            custom={height}
-            ref={containerRef}
-        >
-            <motion.div
-                className='fixed top-0 right-0 bottom-0 overflow-y-auto  w-80 bg-white shadow-light'
-                variants={sidebar}
+        <div className='md:hidden cursor-pointer w-12 h-12 z-20 relative text-bluegreen-500'>
+            <motion.nav
+                className='absolute top-0 left-0 bottom-0 right-0 w-12 h-12'
+                initial={false}
+                animate={isOpen ? "open" : "closed"}
+                custom={height}
+                ref={containerRef}
             >
-                <MobileNavList />
-            </motion.div>
-            <MenuToggle toggle={() => setIsOpen(!isOpen)} />
-        </motion.nav>
+                <motion.div
+                    className='fixed top-0 right-0 bottom-0 overflow-y-auto  w-80 bg-white shadow-light'
+                    variants={sidebar}
+                >
+                    <Link href='/'>
+                        <a className='flex justify-self-start'>
+                            <h3 className='text-center text-3xl whitespace-nowrap'>
+                                <span className='snazzy text-blueyonder-500'>Snazzy </span>
+                                <span className='stones text-zinc-700'>Stones</span>
+                            </h3>
+                        </a>
+                    </Link>
+                    <MobileNavList menuContents={menuContents} />
+                </motion.div>
+                <MenuToggle toggle={() => setIsOpen(!isOpen)} />
+            </motion.nav>
+        </div>
     );
 }
