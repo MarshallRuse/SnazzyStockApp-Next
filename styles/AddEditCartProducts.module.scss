@@ -1,0 +1,10 @@
+.addProductQuantityTextbox {
+    & .MuiOutlinedInput-root {
+        border-radius: 0;
+    }
+
+    & input {
+        font-size: 1.5em;
+        text-align: center;
+    }
+}

@@ -43,7 +43,7 @@ model User {
   id               String            @id @default(cuid())
   name             String?
   image            String?
-  email            String?           @unique
+  email            String            @unique
   emailVerified    DateTime?
   phoneNumber      String?
   address          String?
@@ -66,6 +66,7 @@ model Product {
   variationName    String?
   categoryId       String
   category         ProductCategory      @relation(fields: [categoryId], references: [id])
+  targetPrice      Float?
   description      String?
   parentId         String?
   parent           Product?             @relation("Variations", fields: [parentId], references: [id])
@@ -103,9 +104,9 @@ model ProductInstance {
   invoiceCurrency   String
   CADConversionRate Float
   invoiceCostCAD    Float?
-  targetPrice       Float?
   discount          Float?
-  finalSalePrice    Float            @default(0)
+  discountType      DiscountType?
+  finalSalePrice    Float?
   purchaseOrderId   String
   purchaseOrder     PurchaseOrder    @relation(fields: [purchaseOrderId], references: [id])
   saleTransactionId String?
@@ -124,6 +125,8 @@ model PurchaseOrder {
   productInstances ProductInstance[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
+
+  @@unique(fields: [date, supplierId], name: "dateSupplier")
 }
 
 model SaleTransaction {
@@ -135,7 +138,6 @@ model SaleTransaction {
   city              String?
   provinceState     String?
   country           String?
-  discount          Float?
   customerId        String
   customer          Customer              @relation(fields: [customerId], references: [id])
   salesPersonId     String
@@ -149,9 +151,9 @@ model SaleTransaction {
 
 model Supplier {
   id             String          @id @default(cuid())
-  name           String
-  email          String?
-  phoneNumber    String?
+  name           String          @unique
+  email          String?         @unique
+  phoneNumber    String?         @unique
   address        String?
   city           String?
   provinceState  String?
@@ -166,8 +168,8 @@ model Customer {
   id               String            @id @default(cuid())
   firstName        String
   lastName         String
-  email            String?
-  phoneNumber      String?
+  email            String?           @unique
+  phoneNumber      String?           @unique
   address          String?
   city             String?
   provinceState    String?
@@ -180,7 +182,7 @@ model Customer {
 
 model Source {
   id               String            @id @default(cuid())
-  type             String
+  type             String            @unique
   saleTransactions SaleTransaction[]
 }
 
@@ -193,4 +195,9 @@ enum ProductVariationType {
 enum SaleTransactionStatus {
   OPEN
   COMPLETE
+}
+
+enum DiscountType {
+  ITEM
+  CART
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
+import { useSession } from 'next-auth/react';
 import Sidebar from "./Sidebar";
 import MobileNav from "./mobile/MobileNav";
 import type { IMenuItem } from "lib/interfaces/IMenuItem";
 import type { ProductCategoryTree } from "lib/interfaces/IProductCategoryTree";
-import type { ProductCategory } from "@prisma/client";
 import Assessment from "@mui/icons-material/Assessment";
 import Category from "@mui/icons-material/Category";
 import Clipboard from "@mui/icons-material/Assignment";
@@ -13,10 +13,12 @@ import ShoppingCart from "@mui/icons-material/ShoppingCart";
 import Storefront from "@mui/icons-material/Storefront";
 
 export default function NavMenu() {
+    const { data: session, status } = useSession();
+
     const [menuContents, setMenuContents] = useState<IMenuItem[]>([
         {
             isLink: true,
-            link: "/",
+            link: "/checkout",
             displayText: "Checkout",
             displayIcon: () => <ShoppingCart fontSize='small' className='mr-2' />,
         },
@@ -84,23 +86,31 @@ export default function NavMenu() {
 
     const fetchCategoryMenuItems = async () => {
         const categoriesResponse = await fetch("/api/product_categories?hierarchy=true");
-        const categories: ProductCategoryTree[] = await categoriesResponse.json();
-        console.log("categories: ", categories);
-        const menuItems: IMenuItem[] = categories.map((cat: ProductCategoryTree) => categoryChildrenToSubMenus(cat));
+        if (categoriesResponse.status === 200){
+            const categories: ProductCategoryTree[] = await categoriesResponse.json();
+            console.log("categories: ", categories);
+            const menuItems: IMenuItem[] = categories?.map((cat: ProductCategoryTree) =>
+                categoryChildrenToSubMenus(cat)
+            );
 
-        menuItems.sort((a: IMenuItem, b: IMenuItem) =>
-            a.displayText > b.displayText ? 1 : b.displayText > a.displayText ? -1 : 0
-        );
+            menuItems.sort((a: IMenuItem, b: IMenuItem) =>
+                a.displayText > b.displayText ? 1 : b.displayText > a.displayText ? -1 : 0
+            );
 
-        const menuContentsCopy = [...menuContents];
-        const productsIndex = menuContentsCopy.findIndex((menuItem) => menuItem.displayText === "Products");
-        menuContentsCopy[productsIndex].submenu = menuItems;
-        setMenuContents(menuContentsCopy);
+            const menuContentsCopy = [...menuContents];
+            const productsIndex = menuContentsCopy.findIndex((menuItem) => menuItem.displayText === "Products");
+            menuContentsCopy[productsIndex].submenu = menuItems;
+            setMenuContents(menuContentsCopy);
+        }
+        
     };
 
     useEffect(() => {
-        fetchCategoryMenuItems();
-    }, []);
+        if (status === "authenticated"){
+            fetchCategoryMenuItems();
+        }
+        
+    }, [status]);
 
     return (
         <>

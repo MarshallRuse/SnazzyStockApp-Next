@@ -90,10 +90,9 @@ const ProductSchema: SchemaOf<IProductFormValues> = object({
 });
 
 type ProductFormProps = {
-    initialValues: IProductFormValues;
+    initialValues?: IProductFormValues;
     categories: ProductCategory[];
     redirectPath?: string;
-    onSubmit: () => void;
 };
 
 export default function ProductForm({ initialValues = null, categories = [], redirectPath = "" }: ProductFormProps) {

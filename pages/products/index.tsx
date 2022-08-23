@@ -40,6 +40,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
                       in: [category.id, ...subCategories?.map((cat) => cat.id)],
                   },
               },
+              include: {
+                  parent: true,
+              },
           })
         : await prisma.product.findMany();
 
@@ -51,11 +54,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
 };
 
+type ProductWithParent = Product & { parent: Product };
+
 export default function ProductsListPage({
     products = [],
     category = null,
 }: {
-    products: Product[];
+    products: (Product & { parent: Product })[];
     category: ProductCategory;
 }) {
     const { query } = useRouter();
@@ -70,18 +75,20 @@ export default function ProductsListPage({
 
     const handleCompactModeChange = () => setCompactMode(!compactMode);
 
-    const groupProducts = (products: Product[]) => {
+    const groupProducts = (products: ProductWithParent[]): IProductGroup[] => {
         // Create a list of simple and Variable products
-        const simpleAndVariableProducts: Product[] = products.filter(
+        const simpleAndVariableProducts: ProductWithParent[] = products.filter(
             (prod) => prod.type === "SIMPLE" || prod.type === "VARIABLE"
         );
+
+        const variationProducts: ProductWithParent[] = products.filter((prod) => prod.type === "VARIATION");
 
         const productGroups: IProductGroup[] = simpleAndVariableProducts.map((product: Product) => ({
             groupSKU: product.sku,
             groupType: product.type,
             groupName: product.name,
             groupImage: product.image,
-            variations: products.filter((prod) => prod.type === "VARIATION" && prod.parentId === product.id),
+            variations: variationProducts.filter((prod) => prod.parent?.id === product.id),
         }));
 
         return productGroups;

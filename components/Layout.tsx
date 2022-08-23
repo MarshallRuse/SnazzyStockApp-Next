@@ -1,16 +1,21 @@
+import type { ReactNode } from "react";
 import NavMenu from "./NavMenu/NavMenu";
+import { CircularProgress } from "@mui/material";
 import { useSession } from "next-auth/react";
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: ReactNode }) {
     const { data: session, status } = useSession();
-    //console.log("status: ", status);
 
-    return (
+    return status !== "loading" ? (
         <>
             {status === "authenticated" && <NavMenu />}
             <main className={`main min-h-screen ${status === "authenticated" ? "md:ml-60" : ""} py-5 px-8`}>
                 {children}
             </main>
         </>
+    ) : (
+        <div className='w-screen h-screen flex justify-center items-center'>
+            <CircularProgress />
+        </div>
     );
 }

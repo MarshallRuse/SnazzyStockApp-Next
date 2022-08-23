@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSession } from "next-auth/react";
-import { Prisma } from "@prisma/client";
+import { Prisma, Product } from "@prisma/client";
 import { prisma } from "lib/prisma";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,8 +11,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === "GET") {
+        let products: Product[] | null = null;
         try {
-            const products = await prisma.product.findMany();
+            const { instanceCount } = req.query;
+            if (instanceCount) {
+                products = await prisma.product.findMany({
+                    where: {
+                        type: {
+                            in: ["SIMPLE", "VARIATION"],
+                        },
+                    },
+                    include: {
+                        productInstances: {
+                            select: {
+                                id: true,
+                                saleTransactionId: true,
+                            },
+                        },
+                    },
+                });
+            } else {
+                products = await prisma.product.findMany();
+            }
+
             res.status(200).json(products);
         } catch (err) {
             return res.status(500).json({ message: "[Products GET] Something went wrong" });

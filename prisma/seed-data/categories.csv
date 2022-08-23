@@ -1,0 +1,11 @@
+Name,Parent_Name
+Jewellery,
+Necklaces,Jewellery
+Chain Necklaces,Necklaces
+Bracelets,Jewellery
+Bangles,Bracelets
+Pendants,Jewellery
+Earrings,Jewellery
+Hoops,Earrings
+Studs,Earrings
+Little Things,Pendants
