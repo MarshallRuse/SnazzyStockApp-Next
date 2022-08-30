@@ -1,6 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ["./pages/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}"],
+    corePlugins: {
+        preflight: true,
+    },
     theme: {
         transitionDuration: {
             DEFAULT: "300ms",
@@ -71,5 +74,10 @@ module.exports = {
             },
         },
     },
+    safelist: [
+        {
+            pattern: /bg-(blueyonder|bluegreen|cerise)-(50|100|200|300|400|500|600|700|800|900)/,
+        },
+    ],
     plugins: [],
 };

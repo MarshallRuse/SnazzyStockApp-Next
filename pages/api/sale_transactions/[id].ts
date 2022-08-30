@@ -65,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                     }),
                 ]);
 
-                return res.status(204).json(updatedSaleTransaction);
+                return res.status(204).end();
             } catch (err) {
                 return res.status(500).json({ message: "[sale_transactions PATCH] Something went wrong" });
             }
@@ -89,16 +89,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         );
 
         // With a prisma transaction, delete the sale transaction
-        const deletedSaleTransaction = await prisma.$transaction([
-            ...productInstanceUpdates,
-            prisma.saleTransaction.delete({
-                where: {
-                    id: st.id,
-                },
-            }),
-        ]);
+        try {
+            await prisma.$transaction([
+                ...productInstanceUpdates,
+                prisma.saleTransaction.delete({
+                    where: {
+                        id: st.id,
+                    },
+                }),
+            ]);
 
-        return res.status(204).json(deletedSaleTransaction);
+            return res.status(204).end();
+        } catch (err) {
+            return res.status(500).json({ message: "[sale_transactions DELETE] Something went wrong" });
+        }
     } else {
         res.setHeader("Allow", ["PATCH", "DELETE"]);
         res.status(405).json({ message: `HTTP method ${req.method} is not supported.` });

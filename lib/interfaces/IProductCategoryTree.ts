@@ -1,3 +1,3 @@
 import { ProductCategory } from "@prisma/client";
 
-export type ProductCategoryTree = ProductCategory & { children: ProductCategoryTree[] };
+export type ProductCategoryTree = ProductCategory & { children: ProductCategoryTree[]; productCount?: number };

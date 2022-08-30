@@ -33,6 +33,9 @@ const theme = createTheme({
             dark: fullConfig.theme.colors.cerise[700],
             light: fullConfig.theme.colors.cerise[300],
         },
+        text: {
+            primary: fullConfig.theme.colors.zinc[500],
+        },
         common: {
             brand: {
                 main: fullConfig.theme.colors.blueyonder[500],
@@ -44,12 +47,12 @@ const theme = createTheme({
     },
 });
 
-function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+function MyApp({ Component, pageProps: { session, pagePadding, ...pageProps } }: AppProps) {
     return (
         <>
             <AuthProvider session={session}>
                 <ThemeProvider theme={theme}>
-                    <Layout>
+                    <Layout pagePadding={pagePadding}>
                         <Component {...pageProps} />
                     </Layout>
                 </ThemeProvider>

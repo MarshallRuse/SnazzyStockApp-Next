@@ -26,7 +26,9 @@ export const productCategoryListToTree = (categories: ProductCategory[]): Produc
     return roots;
 };
 
-export const productCategoryTreeToList = (root: ProductCategoryTree): ProductCategory[][] => {
+export const productCategoryTreeToList = (
+    root: ProductCategoryTree
+): (ProductCategory & { _count?: { products: number } })[][] => {
     const res: ProductCategory[][] = [];
     BFS(root, 0);
     return res;
@@ -51,6 +53,11 @@ export const productCategorySubTree = (
     let result = null;
 
     for (const node of level) {
+        if (result !== null) {
+            break;
+            // result was found in a siblings descendents,
+            // break to avoid overwriting with node's children
+        }
         if (node[matchField] === matchValue) {
             result = node;
             break;

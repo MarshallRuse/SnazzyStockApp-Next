@@ -10,9 +10,17 @@ type SiteSearchProps = {
     className?: string;
     type: "link" | "input";
     onValueChange?: (v: ProductWithInstanceStockData | null) => void;
+    productsProvided?: boolean;
+    providedProducts?: ProductWithInstanceStockData[];
 };
 
-export default function ProductAutocomplete({ className = "", type, onValueChange = () => null }: SiteSearchProps) {
+export default function ProductAutocomplete({
+    className = "",
+    type,
+    onValueChange = () => null,
+    productsProvided = false,
+    providedProducts = [],
+}: SiteSearchProps) {
     const [products, setProducts] = useState([]);
     const [value, setValue] = useState<ProductWithInstanceStockData | null>(null);
     const inputRef = useRef(null);
@@ -21,25 +29,33 @@ export default function ProductAutocomplete({ className = "", type, onValueChang
         setValue(null);
     };
 
-    useEffect(() => {
-        const fetchProducts = async () => {
-            const apiResponse = await fetch("/api/products?instanceCount=true");
-            if (apiResponse.status === 200) {
-                const responseProducts = await apiResponse.json();
-                setProducts(responseProducts);
-            } else {
-                const errorMessage = await apiResponse.json();
-                console.log(`Error fetching products: ${errorMessage.message}`);
-            }
-        };
-
-        fetchProducts();
-    }, []);
+    const handleValueChange = (val) => {
+        setValue(val);
+        onValueChange(val);
+    };
 
     useEffect(() => {
-        console.log("autcomplete value: ", value);
-        onValueChange(value);
-    }, [value]);
+        if (productsProvided) {
+            setProducts(providedProducts); // yes, antipattern to use derived state, but products are only ever set here after being provided
+        } else {
+            const fetchProducts = async () => {
+                try {
+                    const apiResponse = await fetch("/api/products?instanceCount=true");
+                    if (apiResponse.status === 200) {
+                        const responseProducts = await apiResponse.json();
+                        setProducts(responseProducts);
+                    } else {
+                        const errorMessage = await apiResponse.json();
+                        console.log(`Error fetching products: ${errorMessage.message}`);
+                    }
+                } catch (err) {
+                    console.log("fetch api/products Error: ", err);
+                }
+            };
+
+            fetchProducts();
+        }
+    }, [productsProvided, providedProducts]);
 
     return (
         <div
@@ -55,11 +71,12 @@ export default function ProductAutocomplete({ className = "", type, onValueChang
                 loading={products.length === 0}
                 loadingText='Loading Snazziness...'
                 value={value}
-                onChange={(event, newValue) => setValue(newValue)}
+                onChange={(event, newValue) => handleValueChange(newValue)}
                 openOnFocus
-                clearOnEscape={type === "link"}
-                // onBlur={type === "link" && handleClearAndCloseInput}
-                // onClose={type === "link" && handleClearAndCloseInput}
+                clearOnEscape
+                blurOnSelect
+                onBlur={handleClearAndCloseInput}
+                onClose={handleClearAndCloseInput}
                 getOptionLabel={(product: ProductWithInstanceStockData) => product?.name}
                 renderOption={(props, product: ProductWithInstanceStockData) => {
                     if (type === "link") {
@@ -75,7 +92,7 @@ export default function ProductAutocomplete({ className = "", type, onValueChang
                                                     src={
                                                         product.image
                                                             ? product.image
-                                                            : "/images/products/SnazzyStonesPlaceholder.png"
+                                                            : "images/products/SnazzyStonesPlaceholder.png"
                                                     }
                                                     className='w-full'
                                                     alt={`Thumbnail sized image for ${`${product.name}${
@@ -102,7 +119,7 @@ export default function ProductAutocomplete({ className = "", type, onValueChang
                                             src={
                                                 product.image
                                                     ? product.image
-                                                    : "/images/products/SnazzyStonesPlaceholder.png"
+                                                    : "images/products/SnazzyStonesPlaceholder.png"
                                             }
                                             className='w-full'
                                             alt={`Thumbnail sized image for ${`${product.name}${

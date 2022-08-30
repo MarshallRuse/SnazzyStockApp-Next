@@ -10,7 +10,7 @@ const HoverStyledAnchor = forwardRef<HTMLAnchorElement, Props>(({ children, clas
     return (
         <a
             ref={ref}
-            className={`py-6 md:py-0 transition-all duration-300 hover:text-bluegreen-500 cursor-pointer ${className}`}
+            className={`py-6 md:py-0 transition-all duration-300 hover:text-bluegreen-500 cursor-pointer flex-nowrap ${className}`}
             {...rest}
         >
             {children}

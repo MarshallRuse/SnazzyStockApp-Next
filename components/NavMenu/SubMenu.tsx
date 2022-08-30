@@ -16,18 +16,22 @@ export default function SubMenu({ menuLabel = "", MenuIcon = null, link = "", ch
 
     return (
         <>
-            <div className='w-full flex  hover:cursor-pointer' onClick={() => setOpen(!open)}>
+            <div className='w-full flex hover:cursor-pointer flex-nowrap' onClick={() => setOpen(!open)}>
                 {link ? (
                     <Link href={link} passHref>
-                        <HoverStyledAnchor className='navItem flex-wrap'>
+                        <HoverStyledAnchor className='navItem flex-nowrap'>
                             {MenuIcon && <MenuIcon />}
-                            {menuLabel}
+                            <span className='opacity-0 pointer-events-none transition duration-300 group-hover:opacity-100 group-hover:pointer-events-auto'>
+                                {menuLabel}
+                            </span>
                         </HoverStyledAnchor>
                     </Link>
                 ) : (
-                    <span className='text-blueyonder-500'>
+                    <span className='flex text-blueyonder-500 flex-nowrap'>
                         {MenuIcon && <MenuIcon />}
-                        {menuLabel}
+                        <span className='opacity-0 pointer-events-none transition duration-300 group-hover:opacity-100 group-hover:pointer-events-auto'>
+                            {menuLabel}
+                        </span>
                     </span>
                 )}
 

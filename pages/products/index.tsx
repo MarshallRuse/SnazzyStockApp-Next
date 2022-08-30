@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { FormControlLabel, Switch, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CTAAnchor from "components/CTAAnchor";
 import ProductCard from "components/ProductCard";
 import SearchBar from "components/SearchBar";
 import { GetServerSideProps } from "next";
@@ -16,6 +15,7 @@ import {
     productCategoryTreeToList,
     productCategorySubTree,
 } from "lib/utils/productCategoryTrees";
+import CTAButton from "components/CTAButton";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { query } = context;
@@ -120,10 +120,10 @@ export default function ProductsListPage({
                 </div>
                 <div className='col-span-12 sm:col-span-3'>
                     <Link href='/products/add' passHref>
-                        <CTAAnchor heavyRounding={false}>
+                        <CTAButton type='link' heavyRounding={false}>
                             <AddIcon />
                             Add Product
-                        </CTAAnchor>
+                        </CTAButton>
                     </Link>
                 </div>
             </div>

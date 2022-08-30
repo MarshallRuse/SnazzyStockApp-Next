@@ -1,51 +1,71 @@
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Autocomplete,
     Button,
     CircularProgress,
-    createFilterOptions,
     Dialog,
     DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
-    InputAdornment,
     TextField,
 } from "@mui/material";
-import {
-    Add as AddIcon,
-    Delete as DeleteIcon,
-    ExpandMore as ExpandMoreIcon,
-    Remove as SubtractIcon,
-    Search as SearchIcon,
-} from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
+import Add from "@mui/icons-material/Add";
+import Edit from "@mui/icons-material/Edit";
+import Delete from "@mui/icons-material/Delete";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import Remove from "@mui/icons-material/Remove";
+
 import BarcodeScanIcon from "./BarcodeScanIcon";
 import ProductAutocomplete from "./forms/inputs/ProductAutocomplete";
 import Scanner from "./Scanner";
-import styles from "../styles/AddEditCartProducts.module.scss";
 import type { ProductWithInstanceStockData } from "lib/interfaces/ProductWithInstanceStockData";
+import CTAButton from "./CTAButton";
+import toast from "react-hot-toast";
+
+const StyledTextbox = styled(TextField)({
+    "& .MuiOutlinedInput-root": {
+        borderRadius: 0,
+    },
+    "& input": {
+        fontSize: "1.5em",
+        padding: "12px",
+        textAlign: "center",
+    },
+});
+
+const CenteredAccordion = styled(Accordion)({
+    boxShadow: "none",
+    marginBottom: 0,
+    "& .MuiAccordionSummary-content": {
+        flexGrow: 0,
+    },
+});
 
 type AddEditCartProductProps = {
     open: boolean;
-    mode: "add" | "edit";
-    cartItemToEdit: any;
-    saleTransactionId: string;
     close: () => void;
-    refreshSaleTransactions: () => void;
+    mode: "add" | "edit";
+    saleTransactionId: string;
+    initialProduct: ProductWithInstanceStockData | null;
     products: ProductWithInstanceStockData[];
+    flagDialogClosed: () => void;
+    refreshSaleTransactions: () => void;
 };
 
 const AddEditCartProduct = ({
     open,
     close,
     mode,
-    cartItemToEdit,
     saleTransactionId,
-    refreshSaleTransactions,
+    initialProduct,
     products = [],
+    flagDialogClosed,
+    refreshSaleTransactions,
 }: AddEditCartProductProps) => {
     const dialogRef = useRef(null);
     const scannerButtonRef = useRef(null);
@@ -53,8 +73,6 @@ const AddEditCartProduct = ({
     const [selectedProduct, setSelectedProduct] = useState<ProductWithInstanceStockData | null>(null);
     const [scannerOn, setScannerOn] = useState(false);
     const [maxQuantity, setMaxQuantity] = useState(0);
-    const [freshAvailableProducts, setFreshAvailableProducts] = useState(false);
-    const [availableProducts, setAvailableProducts] = useState([]);
     const [addProductQuantity, setAddProductQuantity] = useState(1);
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
@@ -91,8 +109,8 @@ const AddEditCartProduct = ({
         setSelectedProduct(null);
         setMaxQuantity(undefined);
         setAddProductQuantity(1);
-        setFreshAvailableProducts(false);
         setScannerOn(false);
+        flagDialogClosed();
         close();
     };
 
@@ -104,6 +122,15 @@ const AddEditCartProduct = ({
                 id: inst.id,
                 saleTransactionId: saleTransactionId,
             }));
+
+        const toastId = toast.loading(
+            `Adding ${selectedProduct.name}${
+                selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                    ? ` - ${selectedProduct.variationName}`
+                    : ""
+            } to cart...`,
+            { position: "top-right" }
+        );
         const result = await fetch("/api/product_instances", {
             method: "PATCH",
             mode: "cors",
@@ -114,6 +141,23 @@ const AddEditCartProduct = ({
         if (result.status === 200) {
             refreshSaleTransactions();
             handleCloseMainDialog();
+            toast.success(
+                `${selectedProduct.name}${
+                    selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                        ? ` - ${selectedProduct.variationName}`
+                        : ""
+                } added!`,
+                { id: toastId, position: "top-right" }
+            );
+        } else {
+            toast.error(
+                `Unable to add ${selectedProduct.name}${
+                    selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                        ? ` - ${selectedProduct.variationName}`
+                        : ""
+                }`,
+                { id: toastId, position: "top-right" }
+            );
         }
     };
 
@@ -122,6 +166,16 @@ const AddEditCartProduct = ({
         const thisSalesProductsInstances = selectedProduct.productInstances.filter(
             (inst) => inst.saleTransactionId === saleTransactionId
         );
+
+        const toastId = toast.loading(
+            `Editing ${selectedProduct.name}${
+                selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                    ? ` - ${selectedProduct.variationName}`
+                    : ""
+            } in cart...`,
+            { position: "top-right" }
+        );
+
         if (addProductQuantity > thisSalesProductsInstances.length) {
             // get the difference
             const numAddedInstIDs = addProductQuantity - thisSalesProductsInstances.length;
@@ -144,6 +198,23 @@ const AddEditCartProduct = ({
             if (result.status === 200) {
                 refreshSaleTransactions();
                 handleCloseMainDialog();
+                toast.success(
+                    `${selectedProduct.name}${
+                        selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                            ? ` - ${selectedProduct.variationName}`
+                            : ""
+                    } edited!`,
+                    { id: toastId, position: "top-right" }
+                );
+            } else {
+                toast.error(
+                    `Unable to edit ${selectedProduct.name}${
+                        selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                            ? ` - ${selectedProduct.variationName}`
+                            : ""
+                    }`,
+                    { id: toastId, position: "top-right" }
+                );
             }
         } else if (addProductQuantity < thisSalesProductsInstances.length) {
             const numRemovedInstIDs = addProductQuantity - thisSalesProductsInstances.length;
@@ -162,6 +233,23 @@ const AddEditCartProduct = ({
             if (result.status === 200) {
                 refreshSaleTransactions();
                 handleCloseMainDialog();
+                toast.success(
+                    `${selectedProduct.name}${
+                        selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                            ? ` - ${selectedProduct.variationName}`
+                            : ""
+                    } edited!`,
+                    { id: toastId, position: "top-right" }
+                );
+            } else {
+                toast.error(
+                    `Unable to edit ${selectedProduct.name}${
+                        selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                            ? ` - ${selectedProduct.variationName}`
+                            : ""
+                    }`,
+                    { id: toastId, position: "top-right" }
+                );
             }
         }
 
@@ -182,6 +270,14 @@ const AddEditCartProduct = ({
                 saleTransactionId: null,
             }));
 
+        const toastId = toast.loading(
+            `Removing ${selectedProduct.name}${
+                selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                    ? ` - ${selectedProduct.variationName}`
+                    : ""
+            } from cart...`,
+            { position: "top-right" }
+        );
         const result = await fetch("/api/product_instances", {
             method: "PATCH",
             mode: "cors",
@@ -193,42 +289,24 @@ const AddEditCartProduct = ({
             refreshSaleTransactions();
             handleCloseConfirmDeleteDialog();
             handleCloseMainDialog();
+            toast.success(
+                `${selectedProduct.name}${
+                    selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                        ? ` - ${selectedProduct.variationName}`
+                        : ""
+                } removed!`,
+                { id: toastId, position: "top-right" }
+            );
+        } else {
+            toast.error(
+                `Unable to remove ${selectedProduct.name}${
+                    selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                        ? ` - ${selectedProduct.variationName}`
+                        : ""
+                }`,
+                { id: toastId, position: "top-right" }
+            );
         }
-    };
-
-    const processProductAvailableStock = (productInstances) => {
-        const processedProducts = [];
-
-        productInstances.forEach((inst) => {
-            console.log("inst: ", inst);
-            // if the product type has not been added to the list of processed products, add it
-            const ppIndex = processedProducts.findIndex((el) => el.SKU === inst.SKU);
-            if (ppIndex === -1) {
-                const newProd = {
-                    SKU: inst.SKU,
-                    Product_Name: `${inst.Product_Name}${
-                        inst.Product_Variation_Name !== null ? ` (${inst.Product_Variation_Name})` : ""
-                    }`,
-                    Typical_Price: inst.Target_Price,
-                    instance_IDs: [],
-                };
-
-                // Push this Product's Product_Instance_ID if this product has any instances in stock
-                // (all products are returned from a LEFT JOIN, if not in stock would be a single record
-                // for product with Product_Instance_ID = NULL)
-                if (inst.Product_Instance_ID !== null) {
-                    newProd.instance_IDs.push(inst.Product_Instance_ID);
-                }
-                console.log("newProd: ", newProd);
-                processedProducts.push(newProd);
-            } else {
-                // if product in processed products already, then just push an Instance ID,
-                // as multiple products mean multiple instances
-                processedProducts[ppIndex].instance_IDs.push(inst.Product_Instance_ID);
-            }
-        });
-
-        return processedProducts;
     };
 
     useEffect(() => {
@@ -239,25 +317,32 @@ const AddEditCartProduct = ({
 
     // watch for the add-or-edit mode prop, component is mounted on page load as "add"
     useEffect(() => {
-        if (mode === "add") {
+        if (mode === "add" && initialProduct === null) {
             setSelectedProduct(null);
             setMaxQuantity(undefined);
+            setAddProductQuantity(0);
+        } else if (mode === "add" && initialProduct !== null) {
+            setSelectedProduct(initialProduct);
+            setMaxQuantity(initialProduct?.productInstances.filter((inst) => inst.saleTransactionId === null).length);
             setAddProductQuantity(1);
         } else {
-            setSelectedProduct(cartItemToEdit);
+            // edit mode
+            setSelectedProduct(initialProduct);
             // max quantity = those products already in cart + the # of remaining available instance IDs
             setMaxQuantity(
-                availableProducts.length
-                    ? availableProducts.filter((prod) => prod.SKU === cartItemToEdit.SKU)[0].instance_IDs.length +
-                          cartItemToEdit.instance_IDs.length
-                    : 0
+                initialProduct?.productInstances.filter(
+                    (inst) => inst.saleTransactionId === null || inst.saleTransactionId === saleTransactionId
+                ).length
             );
-            setAddProductQuantity(cartItemToEdit.instance_IDs.length);
+            setAddProductQuantity(
+                initialProduct?.productInstances.filter((inst) => inst.saleTransactionId === saleTransactionId).length
+            );
         }
-    }, [mode, cartItemToEdit]);
+    }, [mode, initialProduct]);
 
-    // on component unmount, make sure the scanner is turned off
     useEffect(() => {
+        console.log("new mount");
+        // on component unmount, make sure the scanner is turned off
         return () => {
             setScannerOn(false);
         };
@@ -266,15 +351,74 @@ const AddEditCartProduct = ({
     return (
         <>
             <Dialog open={open} onClose={handleCloseMainDialog} aria-labelledby='add-product-dialog-title'>
-                <DialogTitle id='form-dialog-title'>{mode === "add" ? "Add Product" : "Edit Product"}</DialogTitle>
-                <DialogContent className='flex flex-col' ref={dialogRef}>
+                <DialogTitle id='form-dialog-title' className='flex items-center'>
+                    {mode === "add" ? (
+                        <Add fontSize='small' className='mr-2' />
+                    ) : (
+                        <Edit fontSize='small' className='mr-2' />
+                    )}
+                    {mode === "add" ? "Add Product" : "Edit Product"}
+                </DialogTitle>
+                <DialogContent className='flex flex-col subtleScrollbar' ref={dialogRef}>
                     <DialogContentText className='mt-5 mb-10 mx-0'>
                         {selectedProduct !== null ? (
-                            <div className='grid grid-cols-12 items-center'>
-                                <div className='col-span-3'>{selectedProduct.sku}</div>
-                                <div className='col-span-6 text-blueyonder-500'>{selectedProduct.name}</div>
-                                <div className='col-span-3 text-right'>
-                                    {`$${selectedProduct.targetPrice.toFixed(2)}`}
+                            <div className='grid grid-cols-12'>
+                                <div className='col-span-4'>
+                                    <Image
+                                        width={100}
+                                        height={100}
+                                        src={
+                                            selectedProduct.image
+                                                ? selectedProduct.image
+                                                : "/images/products/SnazzyStonesPlaceholder.png"
+                                        }
+                                        className='w-full rounded-md'
+                                        alt={`Thumbnail sized image for ${selectedProduct.name}${
+                                            selectedProduct.type === "VARIATION"
+                                                ? ` - ${selectedProduct.variationName}`
+                                                : ""
+                                        }`}
+                                    />
+                                </div>
+                                <div className='col-span-8 grid grid-cols-12'>
+                                    <div className='col-span-12'>
+                                        {`${selectedProduct.name}${
+                                            selectedProduct.type === "VARIATION"
+                                                ? ` - ${selectedProduct.variationName}`
+                                                : ""
+                                        }`}
+                                        <br />
+                                        <span className='text-sm text-bluegreen-500'>{selectedProduct.sku}</span>
+                                    </div>
+                                    <div className='col-span-4 text-blueyonder-500 font-semibold'>
+                                        {new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
+                                            selectedProduct.targetPrice
+                                        )}
+                                    </div>
+                                    <div className='col-span-8 flex flex-nowrap'>
+                                        <Button
+                                            className='bg-blueyonder-500 hover:bg-blueyonder-700 rounded-tr-none rounded-br-none text-white'
+                                            variant='contained'
+                                            onClick={handleDecrementProductQuantity}
+                                            disabled={selectedProduct === null}
+                                        >
+                                            <Remove />
+                                        </Button>
+                                        <StyledTextbox
+                                            variant='outlined'
+                                            value={addProductQuantity}
+                                            disabled={selectedProduct === null}
+                                            fullWidth
+                                        />
+                                        <Button
+                                            className='bg-blueyonder-500 hover:bg-blueyonder-700 rounded-tl-none rounded-bl-none text-white'
+                                            variant='contained'
+                                            onClick={handleIncrementProductQuantity}
+                                            disabled={selectedProduct === null}
+                                        >
+                                            <Add />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -282,12 +426,9 @@ const AddEditCartProduct = ({
                         )}
                     </DialogContentText>
                     {mode === "add" ? (
-                        <>
-                            <ProductAutocomplete type='input' onValueChange={handleProductSearchSelection} />
-                            {scannerOn && <Scanner scannerOn={scannerOn} qrCodeSuccessCallback={() => {}} />}
-
+                        <div className='grid grid-cols-3 gap-2 items-center'>
                             <Button
-                                className='border border-blueyonder-500 my-5 mx-0'
+                                className='border border-blueyonder-500 my-5 mx-0 col-span-1'
                                 fullWidth
                                 variant='outlined'
                                 onClick={handleScannerButtonClick}
@@ -305,49 +446,30 @@ const AddEditCartProduct = ({
                                     </>
                                 )}
                             </Button>
-                        </>
+                            <div className='col-span-2'>
+                                <ProductAutocomplete
+                                    type='input'
+                                    onValueChange={handleProductSearchSelection}
+                                    productsProvided={true}
+                                    providedProducts={products}
+                                />
+                            </div>
+                            {scannerOn && <Scanner scannerOn={scannerOn} qrCodeSuccessCallback={() => {}} />}
+                        </div>
                     ) : (
-                        <Button
-                            className='mx-auto max-w-xs'
-                            color='secondary'
-                            variant='contained'
+                        <CTAButton
+                            className='mx-auto flex items-center'
+                            heavyRounding={false}
+                            size='medium'
                             onClick={handleDeleteFromCart}
                         >
+                            <Delete className='mr-2' fontSize='small' />
                             Delete From Cart
-                            <DeleteIcon />
-                        </Button>
+                        </CTAButton>
                     )}
-
-                    <div className='grid grid-cols-12'>
-                        <div className='col-span-12 flex justify-center my-5'>
-                            <Button
-                                className='bg-blueyonder-500 hover:bg-blueyonder-700 rounded-tr-none rounded-br-none text-white'
-                                variant='contained'
-                                onClick={handleDecrementProductQuantity}
-                                disabled={selectedProduct === null}
-                            >
-                                <SubtractIcon />
-                            </Button>
-                            <TextField
-                                className={styles.addProductQuantityTextbox}
-                                variant='outlined'
-                                value={addProductQuantity}
-                                disabled={selectedProduct === null}
-                                fullWidth
-                            />
-                            <Button
-                                className='bg-blueyonder-500 hover:bg-blueyonder-700 rounded-tl-none rounded-bl-none text-white'
-                                variant='contained'
-                                onClick={handleIncrementProductQuantity}
-                                disabled={selectedProduct === null}
-                            >
-                                <AddIcon />
-                            </Button>
-                        </div>
-                    </div>
-                    <Accordion className='shadow-none mb-0'>
+                    <CenteredAccordion className={`shadow-none mb-0`}>
                         <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
+                            expandIcon={<ExpandMore />}
                             aria-controls='panel1a-content'
                             id='panel1a-header'
                         ></AccordionSummary>
@@ -363,20 +485,26 @@ const AddEditCartProduct = ({
                                 helperText='Coming Soon'
                             />
                         </AccordionDetails>
-                    </Accordion>
+                    </CenteredAccordion>
                 </DialogContent>
                 <DialogActions className='flex justify-between p-6'>
                     <Button onClick={handleCloseMainDialog} variant='outlined'>
                         Cancel
                     </Button>
-                    <Button
+                    <CTAButton
+                        className='flex items-center'
                         onClick={mode === "add" ? handleAddProductToCart : handleEditProductInCart}
-                        color={selectedProduct !== null ? "secondary" : "inherit"}
-                        variant='contained'
+                        heavyRounding={false}
+                        size='small'
                         disabled={selectedProduct === null}
                     >
+                        {mode === "add" ? (
+                            <Add fontSize='small' className='mr-2' />
+                        ) : (
+                            <Edit fontSize='small' className='mr-2' />
+                        )}
                         {mode === "add" ? "Add" : "Edit"}
-                    </Button>
+                    </CTAButton>
                 </DialogActions>
             </Dialog>
             {mode === "edit" && selectedProduct !== null && (
@@ -389,16 +517,23 @@ const AddEditCartProduct = ({
                     <DialogTitle>Remove This Product?</DialogTitle>
                     <DialogContent>
                         <DialogContentText id='alert-dialog-description'>
-                            Are you sure you would like to remove <strong>{selectedProduct.name}</strong> from the cart?
+                            Are you sure you would like to remove{" "}
+                            <strong>
+                                {selectedProduct.name}
+                                {selectedProduct.type === "VARIATION" && selectedProduct.variationName
+                                    ? ` - ${selectedProduct.variationName}`
+                                    : ""}
+                            </strong>{" "}
+                            from the cart?
                         </DialogContentText>
                     </DialogContent>
                     <DialogActions className='flex justify-between p-6'>
                         <Button onClick={handleCloseConfirmDeleteDialog} variant='outlined'>
                             Cancel
                         </Button>
-                        <Button onClick={handleConfirmDeleteFromCart} variant='contained' color='secondary'>
+                        <CTAButton heavyRounding={false} size='small' onClick={handleConfirmDeleteFromCart}>
                             Confirm
-                        </Button>
+                        </CTAButton>
                     </DialogActions>
                 </Dialog>
             )}

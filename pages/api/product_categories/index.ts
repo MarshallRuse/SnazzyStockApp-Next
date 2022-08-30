@@ -11,7 +11,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === "GET") {
-        console.log("req.query", req.query);
         const categories = await prisma.productCategory.findMany();
         try {
             if (req.query.hierarchy === "true") {

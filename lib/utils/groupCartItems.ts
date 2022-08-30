@@ -10,7 +10,8 @@ function groupCartItems(cartItems: (ProductInstance & { product: Product })[]): 
                 productName: `${cartItem.product.name}${
                     cartItem.product.variationName && ` (${cartItem.product.variationName})`
                 }`,
-                typicalPrice: cartItem.product.targetPrice,
+                targetPrice: cartItem.product.targetPrice,
+                image: cartItem.product.image,
                 instanceIds: [cartItem.id],
             });
         } else {

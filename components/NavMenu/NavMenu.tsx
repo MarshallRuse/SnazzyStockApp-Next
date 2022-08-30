@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSession } from 'next-auth/react';
+import { useSession } from "next-auth/react";
 import Sidebar from "./Sidebar";
 import MobileNav from "./mobile/MobileNav";
 import type { IMenuItem } from "lib/interfaces/IMenuItem";
@@ -86,7 +86,7 @@ export default function NavMenu() {
 
     const fetchCategoryMenuItems = async () => {
         const categoriesResponse = await fetch("/api/product_categories?hierarchy=true");
-        if (categoriesResponse.status === 200){
+        if (categoriesResponse.status === 200) {
             const categories: ProductCategoryTree[] = await categoriesResponse.json();
             console.log("categories: ", categories);
             const menuItems: IMenuItem[] = categories?.map((cat: ProductCategoryTree) =>
@@ -102,14 +102,12 @@ export default function NavMenu() {
             menuContentsCopy[productsIndex].submenu = menuItems;
             setMenuContents(menuContentsCopy);
         }
-        
     };
 
     useEffect(() => {
-        if (status === "authenticated"){
+        if (status === "authenticated") {
             fetchCategoryMenuItems();
         }
-        
     }, [status]);
 
     return (
