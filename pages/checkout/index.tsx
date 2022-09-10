@@ -19,6 +19,7 @@ import CartProductCard from "components/CartProductCard";
 import type { GetServerSideProps } from "next";
 import type { SaleTransaction, ProductInstance, Product, User, Source } from "@prisma/client";
 import type { ProductCategoryTree } from "lib/interfaces/IProductCategoryTree";
+import TabPanel from "components/TabPanel";
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const session = await unstable_getServerSession(context.req, context.res, authOptions);
@@ -101,27 +102,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             pagePadding: false,
         },
     };
-};
-
-type TabPanelProps = {
-    children: ReactNode;
-    value: number;
-    index: number;
-};
-
-const TabPanel = ({ children, value, index, ...other }: TabPanelProps) => {
-    return (
-        <div
-            className='overflow-y-auto rounded shadow-md flex flex-col flex-grow pb-4'
-            role='tabpanel'
-            hidden={value !== index}
-            id={`simple-tabpanel-${index}`}
-            aria-labelledby={`simple-tab-${index}`}
-            {...other}
-        >
-            {value === index && <>{children}</>}
-        </div>
-    );
 };
 
 type CheckoutPageProps = {

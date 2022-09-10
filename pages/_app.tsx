@@ -1,6 +1,7 @@
 import { SessionProvider as AuthProvider } from "next-auth/react";
 import resolveConfig from "tailwindcss/resolveConfig";
 import tailwindConfig from "../tailwind.config.js";
+import { TailwindColorContext } from "lib/contexts/TailwindColorContext";
 import "../styles/globals.scss";
 import Layout from "components/Layout";
 import { Toaster } from "react-hot-toast";
@@ -52,9 +53,11 @@ function MyApp({ Component, pageProps: { session, pagePadding, ...pageProps } }:
         <>
             <AuthProvider session={session}>
                 <ThemeProvider theme={theme}>
-                    <Layout pagePadding={pagePadding}>
-                        <Component {...pageProps} />
-                    </Layout>
+                    <TailwindColorContext.Provider value={fullConfig.theme.colors}>
+                        <Layout pagePadding={pagePadding}>
+                            <Component {...pageProps} />
+                        </Layout>
+                    </TailwindColorContext.Provider>
                 </ThemeProvider>
             </AuthProvider>
             <Toaster />

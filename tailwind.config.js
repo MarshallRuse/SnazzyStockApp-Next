@@ -65,6 +65,11 @@ module.exports = {
             },
             boxShadow: {
                 light: "8px 10px 10px 0px rgba(0, 0, 0, 0.1)",
+                "light-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
+                "light-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
+                lightest: "8px 10px 10px 0px rgba(0, 0, 0, 0.025)",
+                "lightest-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
+                "lightest-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
             },
             boxShadowColor: {
                 bluegreenLight: "#14b6b84d",

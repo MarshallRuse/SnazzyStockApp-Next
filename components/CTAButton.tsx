@@ -75,7 +75,6 @@ const CTAButton = forwardRef<HTMLButtonElement & HTMLAnchorElement, Props>(
                 break;
             case "secondary":
                 colorFactors = getColorFactors(secondaryColor);
-                console.log("colorFactors: ", colorFactors);
                 break;
             case "other":
                 colorFactors = getColorFactors(colorClass);
