@@ -190,3 +190,32 @@ a {
         width: 0;
     }
 }
+
+.snazzyList {
+    margin-left: 2em;
+    & li {
+        line-height: 2;
+        margin-bottom: 1em;
+        max-width: 65ch;
+
+        &::before {
+            content: "";
+            display: inline-block;
+            height: 1em;
+            width: 1em;
+            background-size: contain;
+            background-repeat: no-repeat;
+            margin-right: 0.5em;
+            margin-left: -1.5em;
+            margin-bottom: -0.3em;
+        }
+    }
+
+    &.whiteList li::before {
+        background-image: url("/svg/SnazzyTempLogo_Opt.svg");
+    }
+
+    &.blueList li::before {
+        background-image: url("/svg/SnazzyTempLogo_Opt_AltColours.svg");
+    }
+}

@@ -1,6 +1,8 @@
 export interface IProductFormVariationValues {
+    id?: string;
     sku: string;
-    name: string;
+    variationName: string;
+    HBCSku: string;
     length: number;
     lengthUnit: string;
     width: number;

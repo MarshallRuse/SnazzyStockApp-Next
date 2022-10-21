@@ -1,9 +1,11 @@
 import { IProductFormVariationValues } from "./IProductFormVariationValues";
 
 export interface IProductFormValues {
+    id?: string;
     sku: string;
     name: string;
     category: string;
+    HBCSku: string;
     description: string;
     type: string;
     image: string;

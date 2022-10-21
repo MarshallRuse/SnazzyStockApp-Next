@@ -1,4 +1,4 @@
-import { forwardRef, ReactNode } from "react";
+import { forwardRef, ReactNode, SyntheticEvent } from "react";
 
 interface Props {
     type?: "button" | "link";
@@ -9,7 +9,7 @@ interface Props {
     color?: "primary" | "secondary" | "other";
     colorClass?: string;
     disabled?: boolean;
-    onClick?: () => void;
+    onClick?: (e?: SyntheticEvent) => void;
 }
 
 const CTAButton = forwardRef<HTMLButtonElement & HTMLAnchorElement, Props>(

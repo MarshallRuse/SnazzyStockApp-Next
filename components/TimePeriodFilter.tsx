@@ -25,6 +25,7 @@ export default function TimePeriodSelect({ period, onPeriodChange }: TimePeriodS
                     value={period}
                     label='Period'
                     onChange={handleChange}
+                    sx={{ backgroundColor: "white" }}
                 >
                     {periods.map((p) => (
                         <MenuItem key={`time-period-select-option-${p}`} value={p}>

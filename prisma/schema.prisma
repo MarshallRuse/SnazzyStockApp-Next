@@ -67,6 +67,7 @@ model Product {
   categoryId       String
   category         ProductCategory      @relation(fields: [categoryId], references: [id])
   targetPrice      Float?
+  HBCSku           String?              @unique
   description      String?
   parentId         String?
   parent           Product?             @relation("Variations", fields: [parentId], references: [id])

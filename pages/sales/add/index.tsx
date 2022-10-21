@@ -1,5 +1,24 @@
+import { unstable_getServerSession } from "next-auth/next";
+import { authOptions } from "pages/api/auth/[...nextauth]";
 import Link from "next/link";
 import Image from "next/image";
+import type { GetServerSideProps } from "next";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const session = await unstable_getServerSession(context.req, context.res, authOptions);
+    if (!session) {
+        return {
+            redirect: {
+                destination: "/",
+                permanent: false,
+            },
+        };
+    }
+
+    return {
+        props: {},
+    };
+};
 
 const AddSalesPage = () => {
     return (

@@ -106,21 +106,23 @@ const SalesPage = ({ salesData }: SalesPageProps) => {
 
     return (
         <div className='grid grid-cols-12 gap-4 items-center'>
-            <div className='col-span-12 sm:col-span-2'>
-                <h1>Sales</h1>
+            <div className='fixed top-0 left-14 right-0 px-8 col-span-12 grid grid-cols-12 items-center bg-white z-10'>
+                <div className='col-span-12 sm:col-span-2'>
+                    <h1>Sales</h1>
+                </div>
+                <div className='col-span-12 sm:col-span-4'>
+                    <TimePeriodSelect period={period} onPeriodChange={onPeriodChange} />
+                </div>
+                <div className='col-span-12 sm:col-span-6 text-right'>
+                    <Link href='/sales/add' passHref>
+                        <CTAButton type='link' color='secondary' heavyRounding={false} size='medium'>
+                            <AddIcon fontSize='small' className='mr-2' />
+                            Add Sales
+                        </CTAButton>
+                    </Link>
+                </div>
             </div>
-            <div className='col-span-12 sm:col-span-4'>
-                <TimePeriodSelect period={period} onPeriodChange={onPeriodChange} />
-            </div>
-            <div className='col-span-12 sm:col-span-6 text-right'>
-                <Link href='/sales/add' passHref>
-                    <CTAButton type='link' color='secondary' heavyRounding={false} size='medium'>
-                        <AddIcon fontSize='small' className='mr-2' />
-                        Add Sales
-                    </CTAButton>
-                </Link>
-            </div>
-            <div className='col-span-12 grid grid-cols-3 grid-rows-2 grid-flow-col justify-center'>
+            <div className='mt-32 col-span-12 grid grid-cols-3 grid-rows-2 grid-flow-col justify-center'>
                 <div className='flex flex-col'>
                     <span className='text-zinc-500 text-lg text-center'>Total Sales</span>
                     <Counter

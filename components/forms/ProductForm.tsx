@@ -1,5 +1,6 @@
 import { Prisma, ProductCategory } from "@prisma/client";
 import { useState } from "react";
+import { useRouter } from "next/router";
 import { SchemaOf, string, number, object, array } from "yup";
 import { Controller, FormProvider, useForm, useFieldArray, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -26,14 +27,16 @@ import { IProductFormVariationValues } from "lib/interfaces/IProductFormVariatio
 import toast from "react-hot-toast";
 
 const ProductVariationSchema: SchemaOf<IProductFormVariationValues> = object({
+    id: string().trim(),
     sku: string().trim().when("type", {
         is: "VARIABLE",
         then: string().required(),
     }),
-    name: string().trim().when("type", {
+    variationName: string().trim().when("type", {
         is: "VARIABLE",
         then: string().required(),
     }),
+    HBCSku: string().trim(),
     length: number()
         .positive()
         .transform((value) => (isNaN(value) ? undefined : value))
@@ -57,9 +60,11 @@ const ProductVariationSchema: SchemaOf<IProductFormVariationValues> = object({
 });
 
 const ProductSchema: SchemaOf<IProductFormValues> = object({
+    id: string().trim(),
     sku: string().trim().required(),
     name: string().trim().required(),
     category: string().trim().required(),
+    HBCSku: string().trim(),
     description: string().trim(),
     type: string().trim().required().oneOf(["SIMPLE", "VARIABLE", "VARIATION"]),
     image: string().trim().url(),
@@ -89,44 +94,55 @@ const ProductSchema: SchemaOf<IProductFormValues> = object({
     }),
 });
 
+export const defaultProductFormValues: IProductFormValues = {
+    sku: "",
+    name: "",
+    category: "",
+    HBCSku: "",
+    description: "",
+    type: "SIMPLE",
+    image: "",
+    length: null,
+    lengthUnit: "",
+    width: null,
+    widthUnit: "",
+    height: null,
+    heightUnit: "",
+    weight: null,
+    weightUnit: "",
+    variations: [
+        {
+            sku: "",
+            variationName: "",
+            HBCSku: "",
+            length: null,
+            lengthUnit: "",
+            width: null,
+            widthUnit: "",
+            height: null,
+            heightUnit: "",
+            weight: null,
+            weightUnit: "",
+        },
+    ],
+};
+
 type ProductFormProps = {
     initialValues?: IProductFormValues;
     categories: ProductCategory[];
+    redirectOnSuccess?: boolean;
     redirectPath?: string;
 };
 
-export default function ProductForm({ initialValues = null, categories = [], redirectPath = "" }: ProductFormProps) {
+export default function ProductForm({
+    initialValues = null,
+    categories = [],
+    redirectOnSuccess = false,
+    redirectPath = "",
+}: ProductFormProps) {
+    const router = useRouter();
     // initial values
-    const { ...initialFormValues } = initialValues ?? {
-        sku: "",
-        name: "",
-        category: "",
-        description: "",
-        type: "SIMPLE",
-        image: "",
-        length: null,
-        lengthUnit: "",
-        width: null,
-        widthUnit: "",
-        height: null,
-        heightUnit: "",
-        weight: null,
-        weightUnit: "",
-        variations: [
-            {
-                sku: "",
-                name: "",
-                length: null,
-                lengthUnit: "",
-                width: null,
-                widthUnit: "",
-                height: null,
-                heightUnit: "",
-                weight: null,
-                weightUnit: "",
-            },
-        ],
-    };
+    const { ...initialFormValues } = initialValues ?? defaultProductFormValues;
 
     // react-hook-forms
     const methods = useForm({
@@ -144,51 +160,102 @@ export default function ProductForm({ initialValues = null, categories = [], red
     const onSubmit: SubmitHandler<IProductFormValues> = async (data: IProductFormValues) => {
         console.log(data);
         try {
-            const { sku, name, type, description } = data;
-            const newProducts: Prisma.ProductCreateWithoutCategoryInput[] = [];
+            const newProducts: (Prisma.ProductCreateWithoutCategoryInput | Prisma.ProductUpdateInput)[] = [];
 
-            if (type === "SIMPLE") {
-                const simpleProduct: Prisma.ProductCreateWithoutCategoryInput = {
-                    sku,
-                    name,
-                    type,
-                    description,
-                    length: data.length,
-                    lengthUnit: data.lengthUnit,
-                    width: data.width,
-                    widthUnit: data.widthUnit,
-                    height: data.height,
-                    heightUnit: data.heightUnit,
-                    weight: data.weight,
-                    weightUnit: data.weightUnit,
-                };
-                newProducts.push(simpleProduct);
-            } else if (type === "VARIABLE") {
-                const parentProduct: Prisma.ProductCreateWithoutCategoryInput = {
-                    sku,
-                    name,
-                    type,
-                    description,
-                };
-                newProducts.push(parentProduct);
-
-                data.variations.forEach((variation) => {
-                    const variant: Prisma.ProductCreateWithoutCategoryInput = {
-                        sku: `${data.sku}-${variation.sku}`,
-                        name,
-                        type: "VARIATION",
-                        variationName: variation.name,
-                        description,
-                        length: variation.length,
-                        lengthUnit: variation.lengthUnit,
-                        width: variation.width,
-                        widthUnit: variation.widthUnit,
-                        height: variation.height,
-                        heightUnit: variation.heightUnit,
-                        weight: variation.weight,
-                        weightUnit: variation.weightUnit,
+            if (data.type === "SIMPLE") {
+                if (initialValues === null) {
+                    // adding a new product
+                    const simpleProduct: Prisma.ProductCreateWithoutCategoryInput = {
+                        sku: data.sku,
+                        name: data.name,
+                        type: data.type,
+                        HBCSku: data.HBCSku,
+                        description: data.description,
+                        length: data.length,
+                        lengthUnit: data.lengthUnit,
+                        width: data.width,
+                        widthUnit: data.widthUnit,
+                        height: data.height,
+                        heightUnit: data.heightUnit,
+                        weight: data.weight,
+                        weightUnit: data.weightUnit,
                     };
-                    newProducts.push(variant);
+                    newProducts.push(simpleProduct);
+                } else if (initialValues !== null && initialValues.id !== null) {
+                    // editing a product, need id present
+                    let simpleProduct: Prisma.ProductUpdateInput = {
+                        id: initialValues.id,
+                    };
+                    for (const [key, value] of Object.entries(initialValues)) {
+                        if (key === "variations") {
+                            continue; // deal with them below
+                        }
+                        if (initialValues[key] !== data[key]) {
+                            simpleProduct[key] = value;
+                        }
+                    }
+                    newProducts.push(simpleProduct);
+                }
+            } else if (data.type === "VARIABLE") {
+                if (initialValues === null) {
+                    //adding a new product
+                    const parentProduct: Prisma.ProductCreateWithoutCategoryInput = {
+                        sku: data.sku,
+                        name: data.name,
+                        type: data.type,
+                        description: data.description,
+                    };
+                    newProducts.push(parentProduct);
+                } else if (initialValues !== null && initialValues.id !== null) {
+                    //editing a product
+                    let parentProduct: Prisma.ProductUpdateInput = {
+                        id: initialValues.id,
+                    };
+                    for (const [key, value] of Object.entries(initialValues)) {
+                        if (key === "variations") {
+                            continue; // deal with them below
+                        }
+                        if (initialValues[key] !== data[key]) {
+                            parentProduct[key] = value;
+                        }
+                    }
+                    console.log("parentProduct", parentProduct);
+                    newProducts.push(parentProduct);
+                }
+
+                data.variations.forEach((variation, ind) => {
+                    if (initialValues === null) {
+                        const variant: Prisma.ProductCreateWithoutCategoryInput = {
+                            sku: `${data.sku}-${variation.sku}`,
+                            name: data.name,
+                            type: "VARIATION",
+                            variationName: variation.variationName,
+                            HBCSku: variation.HBCSku,
+                            description: data.description,
+                            length: variation.length,
+                            lengthUnit: variation.lengthUnit,
+                            width: variation.width,
+                            widthUnit: variation.widthUnit,
+                            height: variation.height,
+                            heightUnit: variation.heightUnit,
+                            weight: variation.weight,
+                            weightUnit: variation.weightUnit,
+                        };
+                        newProducts.push(variant);
+                    } else if (initialValues !== null && variation.id !== null) {
+                        let variant: Prisma.ProductUpdateInput = {
+                            id: variation.id,
+                        };
+
+                        if (ind < initialValues.variations.length) {
+                            for (const [key, initialValue] of Object.entries(initialValues.variations[ind])) {
+                                if (variation[key] !== initialValue) {
+                                    variant[key] = variation[key];
+                                }
+                            }
+                            newProducts.push(variant);
+                        }
+                    }
                 });
             }
 
@@ -197,23 +264,38 @@ export default function ProductForm({ initialValues = null, categories = [], red
                 categoryId: data.category,
             };
 
-            const result = await fetch("/api/products", {
-                method: "POST",
+            const url = initialValues === null ? "/api/products" : `/api/products/${data.sku}`;
+            console.log("url: ", url);
+            const result = await fetch(url, {
+                method: initialValues === null ? "POST" : "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
             const resultJSON = await result.json();
 
-            if (result.status === 201) {
+            if (url === "/api/products" && result.status === 201) {
                 console.log("SUCCESS!");
-                toast.success("Product added!");
+                toast.success(`${data.name} added!`);
                 methods.reset(initialFormValues);
+                if (redirectOnSuccess) {
+                    router.push(redirectPath ? redirectPath : `/products/${data.sku}`);
+                }
+            } else if (url === `/api/products/${data.sku}` && result.status === 204) {
+                console.log("SUCCESS!");
+                toast.success(`${data.name} Updated!`);
+                methods.reset(initialFormValues);
+                if (redirectOnSuccess) {
+                    router.push(redirectPath ? redirectPath : `/products/${data.sku}`);
+                }
             } else {
-                console.log("Product Creation Error: ", resultJSON);
+                console.log(`Product ${initialValues === null ? "Creation" : "Update"} Error:`);
+                console.log(resultJSON);
                 toast.error("Error adding product, check console.");
             }
         } catch (err) {
-            console.log("Product Creation Error: ", err);
+            console.log(`Product ${initialValues === null ? "Creation" : "Update"} Error:`);
+            console.log(err);
+            toast.error(`Error ${initialValues === null ? "adding" : "editing   "} product, check console.`);
         }
     };
 
@@ -253,7 +335,7 @@ export default function ProductForm({ initialValues = null, categories = [], red
                         </FormControl>
                     )}
                 />
-
+                {watchType === "SIMPLE" && <ReactHookFormTextField name='HBCSku' label='HBC SKU' fullWidth={false} />}
                 <ReactHookFormTextField name='description' label='Description' textArea />
 
                 <Controller
@@ -288,7 +370,7 @@ export default function ProductForm({ initialValues = null, categories = [], red
                                         <Delete />
                                     </IconButton>
                                 </div>
-                                <div className='flex gap-2'>
+                                <div className='grid grid-cols-3 gap-2'>
                                     <TextField
                                         label={`Variation ${index + 1} SKU`}
                                         placeholder='00'
@@ -312,7 +394,7 @@ export default function ProductForm({ initialValues = null, categories = [], red
                                     />
 
                                     <TextField
-                                        className='flex-grow'
+                                        className='col-span-2'
                                         label={`Variation ${index + 1} Name`}
                                         placeholder='16 inch'
                                         variant='outlined'
@@ -325,7 +407,21 @@ export default function ProductForm({ initialValues = null, categories = [], red
                                         }
                                         disabled={disabled}
                                         fullWidth
-                                        {...methods.register(`variations.${index}.name` as const)}
+                                        {...methods.register(`variations.${index}.variationName` as const)}
+                                    />
+                                    <TextField
+                                        className='flex-grow'
+                                        label={`Variation ${index + 1} HBC SKU`}
+                                        placeholder='HBC# ##'
+                                        variant='outlined'
+                                        error={!!methods.formState.errors["variations"]?.[index]?.["HBCSku"]}
+                                        helperText={
+                                            methods.formState.errors["variations"]?.[index]?.[
+                                                "HBCSku"
+                                            ]?.message?.toString() ?? ""
+                                        }
+                                        disabled={disabled}
+                                        {...methods.register(`variations.${index}.HBCSku` as const)}
                                     />
                                 </div>
                                 <ProductAttributeInputs productType='VARIATION' index={index} disabled={disabled} />
@@ -337,7 +433,8 @@ export default function ProductForm({ initialValues = null, categories = [], red
                             onClick={() =>
                                 append({
                                     sku: "",
-                                    name: "",
+                                    variationName: "",
+                                    HBCSku: "",
                                     length: null,
                                     lengthUnit: "",
                                     width: null,
@@ -359,7 +456,7 @@ export default function ProductForm({ initialValues = null, categories = [], red
                         disabled={disabled}
                         className='bg-rose-600 text-white py-2 px-6 rounded-md focus:outline-none focus:ring-4 focus:ring-rose-600 focus:ring-opacity-50 hover:bg-rose-500 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600'
                     >
-                        {isSubmitting ? "Submitting..." : "Submit"}
+                        {isSubmitting ? "Submitting..." : initialValues === null ? "Add Product" : "Edit Product"}
                     </button>
                 </div>
             </form>

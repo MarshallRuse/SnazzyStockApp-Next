@@ -25,6 +25,20 @@ module.exports = {
             script: ["TitlePrimary", "serif", "ui-serif", "Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         },
         extend: {
+            animation: {
+                pop: "pop 0.3s linear 1",
+            },
+            boxShadow: {
+                light: "8px 10px 10px 0px rgba(0, 0, 0, 0.1)",
+                "light-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
+                "light-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
+                lightest: "8px 10px 10px 0px rgba(0, 0, 0, 0.025)",
+                "lightest-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
+                "lightest-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
+            },
+            boxShadowColor: {
+                bluegreenLight: "#14b6b84d",
+            },
             colors: {
                 blueyonder: {
                     50: "#e1e6ef",
@@ -63,19 +77,13 @@ module.exports = {
                     900: "#300513",
                 },
             },
-            boxShadow: {
-                light: "8px 10px 10px 0px rgba(0, 0, 0, 0.1)",
-                "light-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
-                "light-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.1)",
-                lightest: "8px 10px 10px 0px rgba(0, 0, 0, 0.025)",
-                "lightest-reverse": "-8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
-                "lightest-around": "8px 10px 10px 0px rgba(0, 0, 0, 0.1), -8px -10px 10px 0px rgba(0, 0, 0, 0.025)",
-            },
-            boxShadowColor: {
-                bluegreenLight: "#14b6b84d",
-            },
             dropShadow: {
                 light: "2px 4px 4px rgba(0,0,0,0.2)",
+            },
+            keyframes: {
+                pop: {
+                    "50%": { transform: "scale(1.2)" },
+                },
             },
         },
     },
