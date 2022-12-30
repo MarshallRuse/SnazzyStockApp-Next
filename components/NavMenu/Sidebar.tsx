@@ -36,8 +36,8 @@ const RecursiveMenuItem = ({ menuItem }: { menuItem: IMenuItem }) => (
 
 const Sidebar = ({ menuContents = [] }: { menuContents: IMenuItem[] }) => {
     return (
-        <div className='hidden md:block'>
-            <nav className='fixed top-0 left-0 bottom-0 w-14 overflow-x-hidden z-10 py-4 flex flex-col gap-6 items-center align-center bg-white border-r border-bluegreen-500 transition-all duration-200 hover:w-60 group'>
+        <div className='hidden md:block md:z-50'>
+            <nav className='fixed top-0 left-0 bottom-0 w-14 overflow-x-hidden z-50 py-4 flex flex-col gap-6 items-center align-center bg-white border-r border-bluegreen-500 transition-all duration-200 hover:w-60 group'>
                 <div className='relative w-full h-14'>
                     <Link href='/'>
                         <a className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-100 transition duration-300 group-hover:opacity-0 group-hover:pointer-events-none'>

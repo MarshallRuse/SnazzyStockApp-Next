@@ -67,6 +67,12 @@ const CartContents = ({
         setOpenAddEditProductDialog(true);
     };
     const handleCloseAddProductDialog = () => setOpenAddEditProductDialog(false);
+
+    const handleAddToCartButtonClick = () => {
+        setAddOrEditCartItem("add");
+        setOpenAddEditProductDialog(true);
+    };
+
     const handleCartRowClick = (prod: ProductWithInstanceStockData) => {
         // on CartRowClick, pass generic product of same type to
         // AddEditCartProducts so it has the full range of productInstances for quantity
@@ -271,6 +277,11 @@ const CartContents = ({
                         <div className='h-full flex justify-center items-center'>No products in cart</div>
                     )}
                 </div>
+            </div>
+            <div className='flex justify-center'>
+                <CTAButton heavyRounding onClick={handleAddToCartButtonClick}>
+                    Add To Cart
+                </CTAButton>
             </div>
             <div className='grid grid-cols-2 gap-y-2 m-4 mb-0 p-2 bg-slate-100 border-t border-dashed border-zinc-500'>
                 <div>Subtotal:</div>

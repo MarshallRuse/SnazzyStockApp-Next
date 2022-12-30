@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, TextField, createFilterOptions } from "@mui/material";
 import Search from "@mui/icons-material/Search";
 import type { Product } from "@prisma/client";
 import type { ProductWithInstanceStockData } from "lib/interfaces/ProductWithInstanceStockData";
 
-type SiteSearchProps = {
+type ProductAutocompleteProps = {
     className?: string;
     type: "link" | "input";
     onValueChange?: (v: ProductWithInstanceStockData | null) => void;
     productsProvided?: boolean;
     providedProducts?: ProductWithInstanceStockData[];
+    searchLabel?: string;
 };
 
 export default function ProductAutocomplete({
@@ -20,8 +21,9 @@ export default function ProductAutocomplete({
     onValueChange = () => null,
     productsProvided = false,
     providedProducts = [],
-}: SiteSearchProps) {
-    const [products, setProducts] = useState([]);
+    searchLabel,
+}: ProductAutocompleteProps) {
+    const [products, setProducts] = useState<ProductWithInstanceStockData[]>([]);
     const [value, setValue] = useState<ProductWithInstanceStockData | null>(null);
     const inputRef = useRef(null);
 
@@ -34,6 +36,10 @@ export default function ProductAutocomplete({
         onValueChange(val);
     };
 
+    const autocompleteFilterOptions = createFilterOptions({
+        stringify: (option: ProductWithInstanceStockData) => option.sku + option.name,
+    });
+
     useEffect(() => {
         if (productsProvided) {
             setProducts(providedProducts); // yes, antipattern to use derived state, but products are only ever set here after being provided
@@ -42,7 +48,7 @@ export default function ProductAutocomplete({
                 try {
                     const apiResponse = await fetch("/api/products?instanceCount=true");
                     if (apiResponse.status === 200) {
-                        const responseProducts = await apiResponse.json();
+                        const responseProducts: ProductWithInstanceStockData[] = await apiResponse.json();
                         setProducts(responseProducts);
                     } else {
                         const errorMessage = await apiResponse.json();
@@ -77,6 +83,7 @@ export default function ProductAutocomplete({
                 blurOnSelect
                 onBlur={handleClearAndCloseInput}
                 onClose={handleClearAndCloseInput}
+                filterOptions={autocompleteFilterOptions}
                 getOptionLabel={(product: ProductWithInstanceStockData) => product?.name}
                 renderOption={(props, product: ProductWithInstanceStockData) => {
                     if (type === "link") {
@@ -101,9 +108,13 @@ export default function ProductAutocomplete({
                                                 />
                                             )}
                                         </div>
-                                        <div className='flex-grow-0 line-clamp-2'>{`${product.name}${
-                                            product.variationName ? ` - ${product.variationName}` : ""
-                                        }`}</div>
+                                        <div className='flex-grow-0 line-clamp-2 text-right'>
+                                            {`${product.name}${
+                                                product.variationName ? ` - ${product.variationName}` : ""
+                                            }`}
+                                            <br />
+                                            <span className='text-xs'>{product.sku}</span>
+                                        </div>
                                     </a>
                                 </Link>
                             </li>
@@ -128,9 +139,11 @@ export default function ProductAutocomplete({
                                         />
                                     )}
                                 </div>
-                                <div className='flex-grow-0 line-clamp-2'>{`${product.name}${
-                                    product.variationName ? ` - ${product.variationName}` : ""
-                                }`}</div>
+                                <div className='flex-grow-0 line-clamp-2 text-right'>
+                                    {`${product.name}${product.variationName ? ` - ${product.variationName}` : ""}`}
+                                    <br />
+                                    <span className='text-xs'>{product.sku}</span>
+                                </div>
                             </li>
                         );
                     }
@@ -139,7 +152,7 @@ export default function ProductAutocomplete({
                     <TextField
                         {...params}
                         inputRef={inputRef}
-                        label='Search Products'
+                        label={searchLabel ? searchLabel : "Search Products"}
                         color='primary'
                         inputProps={{
                             ...params.inputProps,

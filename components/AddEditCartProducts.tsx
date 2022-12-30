@@ -26,6 +26,9 @@ import Scanner from "./Scanner";
 import type { ProductWithInstanceStockData } from "lib/interfaces/ProductWithInstanceStockData";
 import CTAButton from "./CTAButton";
 import toast from "react-hot-toast";
+import SearchIcon from "@mui/icons-material/Search";
+import WriteInIcon from "@mui/icons-material/DriveFileRenameOutline";
+import SaleWriteInForm from "./forms/SaleWriteInForm";
 
 const StyledTextbox = styled(TextField)({
     "& .MuiOutlinedInput-root": {
@@ -70,6 +73,7 @@ const AddEditCartProduct = ({
     const dialogRef = useRef(null);
     const scannerButtonRef = useRef(null);
 
+    const [addMethod, setAddMethod] = useState<"SEARCH" | "SCAN" | "MANUAL">("SEARCH");
     const [selectedProduct, setSelectedProduct] = useState<ProductWithInstanceStockData | null>(null);
     const [scannerOn, setScannerOn] = useState(false);
     const [maxQuantity, setMaxQuantity] = useState(0);
@@ -81,7 +85,7 @@ const AddEditCartProduct = ({
     const handleProductSearchSelection = (newValue: ProductWithInstanceStockData | null) => {
         setSelectedProduct(newValue);
         newValue !== null
-            ? setMaxQuantity(newValue.productInstances.filter((inst) => inst.saleTransactionId !== null).length)
+            ? setMaxQuantity(newValue.productInstances.filter((inst) => inst.saleTransactionId === null).length)
             : setMaxQuantity(0);
         setAddProductQuantity(1);
     };
@@ -350,7 +354,13 @@ const AddEditCartProduct = ({
 
     return (
         <>
-            <Dialog open={open} onClose={handleCloseMainDialog} aria-labelledby='add-product-dialog-title'>
+            <Dialog
+                open={open}
+                onClose={handleCloseMainDialog}
+                aria-labelledby='add-product-dialog-title'
+                maxWidth='sm'
+                fullWidth
+            >
                 <DialogTitle id='form-dialog-title' className='flex items-center'>
                     {mode === "add" ? (
                         <Add fontSize='small' className='mr-2' />
@@ -391,9 +401,22 @@ const AddEditCartProduct = ({
                                         <span className='text-sm text-bluegreen-500'>{selectedProduct.sku}</span>
                                     </div>
                                     <div className='col-span-4 text-blueyonder-500 font-semibold'>
-                                        {new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
-                                            selectedProduct.targetPrice
-                                        )}
+                                        <div className='flex flex-col h-full justify-between'>
+                                            <div>
+                                                {new Intl.NumberFormat("en-CA", {
+                                                    style: "currency",
+                                                    currency: "CAD",
+                                                }).format(selectedProduct.targetPrice)}
+                                            </div>
+                                            <div className='text-xs text-zinc-500 font-normal'>
+                                                {
+                                                    selectedProduct.productInstances.filter(
+                                                        (inst) => inst.saleTransactionId === null
+                                                    ).length
+                                                }{" "}
+                                                Available
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className='col-span-8 flex flex-nowrap'>
                                         <Button
@@ -426,36 +449,83 @@ const AddEditCartProduct = ({
                         )}
                     </DialogContentText>
                     {mode === "add" ? (
-                        <div className='grid grid-cols-3 gap-2 items-center'>
-                            <Button
-                                className='border border-blueyonder-500 my-5 mx-0 col-span-1'
-                                fullWidth
-                                variant='outlined'
-                                onClick={handleScannerButtonClick}
-                                ref={scannerButtonRef}
-                            >
-                                {scannerOn ? (
-                                    <>
-                                        <CircularProgress size={25} className='my-0 mx-1' />
-                                        Stop Scanning
-                                    </>
-                                ) : (
-                                    <>
-                                        <BarcodeScanIcon className='my-0 mx-1' />
-                                        Scan Products
-                                    </>
-                                )}
-                            </Button>
-                            <div className='col-span-2'>
-                                <ProductAutocomplete
-                                    type='input'
-                                    onValueChange={handleProductSearchSelection}
-                                    productsProvided={true}
-                                    providedProducts={products}
-                                />
+                        <>
+                            <div className='grid grid-cols-3 gap-2'>
+                                <button
+                                    className={`p-4 flex justify-center items-center border rounded-md transition ${
+                                        addMethod === "SEARCH"
+                                            ? "bg-bluegreen-500 text-white"
+                                            : "border-bluegreen-500 text-bluegreen-500"
+                                    }`}
+                                    onClick={() => setAddMethod("SEARCH")}
+                                >
+                                    <SearchIcon />
+                                    Search
+                                </button>
+                                <button
+                                    className={`p-4 flex justify-center items-center border rounded-md transition ${
+                                        addMethod === "SCAN"
+                                            ? "bg-bluegreen-500 text-white"
+                                            : "border-bluegreen-500 text-bluegreen-500"
+                                    }`}
+                                    onClick={() => setAddMethod("SCAN")}
+                                >
+                                    <BarcodeScanIcon className='my-0 mx-1' />
+                                    Scan
+                                </button>
+                                <button
+                                    className={`p-4 flex border justify-center items-center rounded-md transition ${
+                                        addMethod === "MANUAL"
+                                            ? "bg-bluegreen-500 text-white"
+                                            : "border-bluegreen-500 text-bluegreen-500"
+                                    }`}
+                                    onClick={() => setAddMethod("MANUAL")}
+                                >
+                                    <WriteInIcon />
+                                    Write-In
+                                </button>
                             </div>
-                            {scannerOn && <Scanner scannerOn={scannerOn} qrCodeSuccessCallback={() => {}} />}
-                        </div>
+                            {addMethod === "SEARCH" && (
+                                <div className='my-5'>
+                                    <ProductAutocomplete
+                                        type='input'
+                                        onValueChange={handleProductSearchSelection}
+                                        productsProvided={true}
+                                        providedProducts={products}
+                                        searchLabel='Search SKU or Name'
+                                    />
+                                </div>
+                            )}
+                            {addMethod === "SCAN" && (
+                                <>
+                                    <Button
+                                        className='border border-blueyonder-500 my-5 mx-0 py-3'
+                                        fullWidth
+                                        variant='outlined'
+                                        onClick={handleScannerButtonClick}
+                                        ref={scannerButtonRef}
+                                    >
+                                        {scannerOn ? (
+                                            <>
+                                                <CircularProgress size={25} className='my-0 mx-1' />
+                                                Stop Scanning
+                                            </>
+                                        ) : (
+                                            <>
+                                                <BarcodeScanIcon className='my-0 mx-1' />
+                                                Scan Products
+                                            </>
+                                        )}
+                                    </Button>
+                                    {scannerOn && <Scanner scannerOn={scannerOn} qrCodeSuccessCallback={() => {}} />}
+                                </>
+                            )}
+                            {addMethod === "MANUAL" && (
+                                <div className='my-5'>
+                                    <SaleWriteInForm />
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <CTAButton
                             className='mx-auto flex items-center'

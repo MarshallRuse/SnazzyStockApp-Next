@@ -104,6 +104,15 @@ const SalesPage = ({ salesData }: SalesPageProps) => {
         );
     }, [period]);
 
+    const productInstancesInPeriod = productInstances.filter((inst) =>
+        dayjs(inst.saleTransaction?.dateTime).isBetween(
+            startAndEndDate.startDate,
+            startAndEndDate.endDate,
+            "days",
+            "[]"
+        )
+    );
+
     return (
         <div className='grid grid-cols-12 gap-4 items-center'>
             <div className='fixed top-0 left-14 right-0 px-8 col-span-12 grid grid-cols-12 items-center bg-white z-10'>
@@ -200,50 +209,30 @@ const SalesPage = ({ salesData }: SalesPageProps) => {
                 <div className='flex flex-col'>
                     <span className='text-zinc-500 text-lg text-center'>Best Day ($)</span>
                     <span className='text-blueyonder-500 text-3xl text-center mb-8'>
-                        {
-                            Object.entries(
-                                productInstances.reduce((dayCount, inst) => {
-                                    if (
-                                        !dayjs(inst.saleTransaction?.dateTime).isBetween(
-                                            startAndEndDate.startDate,
-                                            startAndEndDate.endDate,
-                                            "days",
-                                            "[]"
-                                        )
-                                    ) {
-                                        return dayCount;
-                                    }
-                                    const day = dayjs(inst.saleTransaction.dateTime).format("ddd, MMM DD, YYYY");
-                                    dayCount[day] = (dayCount[day] || 0) + inst.finalSalePrice;
-                                    return dayCount;
-                                }, {})
-                            ).sort((dayA: [string, number], dayB: [string, number]) => dayA[1] - dayB[1])[0][0]
-                        }
+                        {productInstancesInPeriod.length > 0
+                            ? Object.entries(
+                                  productInstancesInPeriod.reduce((dayCount, inst) => {
+                                      const day = dayjs(inst.saleTransaction.dateTime).format("ddd, MMM DD, YYYY");
+                                      dayCount[day] = (dayCount[day] || 0) + inst.finalSalePrice;
+                                      return dayCount;
+                                  }, {})
+                              ).sort((dayA: [string, number], dayB: [string, number]) => dayA[1] - dayB[1])[0][0]
+                            : "N/A"}
                     </span>
                 </div>
 
                 <div className='flex flex-col'>
                     <span className='text-zinc-500 text-lg text-center'>Most Pop. Category</span>
                     <span className='text-blueyonder-500 text-3xl text-center mb-8'>
-                        {
-                            Object.entries(
-                                productInstances.reduce((catCount, inst) => {
-                                    if (
-                                        !dayjs(inst.saleTransaction?.dateTime).isBetween(
-                                            startAndEndDate.startDate,
-                                            startAndEndDate.endDate,
-                                            "days",
-                                            "[]"
-                                        )
-                                    ) {
-                                        return catCount;
-                                    }
-                                    const categoryName = inst.product.category.name;
-                                    catCount[categoryName] = (catCount[categoryName] || 0) + 1;
-                                    return catCount;
-                                }, {})
-                            ).sort((catA: [string, number], catB: [string, number]) => catA[1] - catB[1])[0][0]
-                        }
+                        {productInstancesInPeriod.length > 0
+                            ? Object.entries(
+                                  productInstancesInPeriod.reduce((catCount, inst) => {
+                                      const categoryName = inst.product.category.name;
+                                      catCount[categoryName] = (catCount[categoryName] || 0) + 1;
+                                      return catCount;
+                                  }, {})
+                              ).sort((catA: [string, number], catB: [string, number]) => catA[1] - catB[1])[0][0]
+                            : "N/A"}
                     </span>
                 </div>
             </div>
